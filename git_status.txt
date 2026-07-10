@@ -1,0 +1,44 @@
+interactive rebase in progress; onto a160a4d
+Last command done (1 command done):
+   pick 4635445 # Your commit message
+No commands remaining.
+You are currently rebasing branch 'main' on 'a160a4d'.
+  (all conflicts fixed: run "git rebase --continue")
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   cloud_rangers/project/TASK.md
+	modified:   cloud_rangers/project/assets/css/styles.css
+	modified:   cloud_rangers/project/assets/js/app.js
+	modified:   cloud_rangers/project/assets/js/chat.js
+	modified:   cloud_rangers/project/assets/js/product-eval-engine.js
+	modified:   cloud_rangers/project/assets/js/scanner.js
+	modified:   cloud_rangers/project/backend/app.py
+	new file:   cloud_rangers/project/backend/data/ingredient_knowledge.csv
+	new file:   cloud_rangers/project/backend/data/regulations.csv
+	new file:   cloud_rangers/project/backend/do_install.bat
+	new file:   cloud_rangers/project/backend/install_and_run.bat
+	new file:   cloud_rangers/project/backend/install_log.txt
+	modified:   cloud_rangers/project/backend/news_service.py
+	modified:   cloud_rangers/project/backend/requirements.txt
+	new file:   cloud_rangers/project/backend/test_request.json
+	modified:   cloud_rangers/project/backend/tests/test_barcode_flow.py
+	new file:   cloud_rangers/project/backend/utils/analysis_engine.py
+	modified:   cloud_rangers/project/backend/utils/data_processor.py
+	modified:   cloud_rangers/project/backend/utils/gemini_integration.py
+	modified:   cloud_rangers/project/backend/utils/product_lookup.py
+	modified:   cloud_rangers/project/product-result.html
+	modified:   cloud_rangers/project/scanner.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_status.txt
+	git_work.bat
+
+--- git log (last 5) 
+a160a4d Merge branch 'main' of https://github.com/Digital-India-Hackathon-2026/404-girls
+6cb63f5 Frontend finalisation
+946f489  Label Padega Sabh implementation
+fc98857 update the code using ocr
+8465b51 Working on scanner functionality
+--- diff HEAD 

@@ -1,0 +1,16 @@
+cloud_rangers\project\assets\js\app.js:<<<<<<< HEAD
+cloud_rangers\project\assets\js\scanner.js:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\app.py:<<<<<<< HEAD
+cloud_rangers\project\backend\requirements.txt:<<<<<<< HEAD
+cloud_rangers\project\scanner.html:<<<<<<< HEAD
+cloud_rangers\project\scanner.html:<<<<<<< HEAD
+cloud_rangers\project\scanner.html:<<<<<<< HEAD
+cloud_rangers\project\scanner.html:<<<<<<< HEAD
+cloud_rangers\project\scanner.html:<<<<<<< HEAD
+Conflict marker check done. 

@@ -576,6 +576,19 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* alert-success used by render engine */
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -618,7 +631,7 @@
 
         <div class="dashboard-container">
             <!-- Loading State -->
-            <div id="loadingContainer" style="display: none;">
+            <div id="loadingContainer" style="display: flex;">
                 <div class="loading-icon-ring"></div>
                 <div>
                     <h3 style="font-weight:700;margin-bottom:0.5rem;">Analyzing Product...</h3>
@@ -626,7 +639,7 @@
                     </p>
                 </div>
                 <div class="loading-steps" id="loadingSteps">
-                    <div class="loading-step" id="step-fetch">
+                    <div class="loading-step active" id="step-fetch">
                         <div class="step-dot"></div>Fetching product data from OpenFoodFacts
                     </div>
                     <div class="loading-step" id="step-extract">

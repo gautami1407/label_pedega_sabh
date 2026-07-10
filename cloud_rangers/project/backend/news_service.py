@@ -42,20 +42,16 @@ def is_product_specific(entry, product_name):
         text += entry.summary.lower()
 
     product_name = product_name.lower().strip()
-    # check if any word from product_name is in text
-    if not any(word in text for word in product_name.split()):
+    # check if any word (3+ chars) from product_name is in text
+    name_words = [w for w in product_name.split() if len(w) >= 3]
+    if not name_words:
+        return False
+    if not any(word in text for word in name_words):
         return False
 
-    # keep safety keywords check
-    if not any(keyword in text for keyword in SAFETY_KEYWORDS):
-        return False
-
-    # make FOOD_CONTEXT_KEYWORDS optional
-    # if you want to catch more articles, comment this line:
-    # if not any(keyword in text for keyword in FOOD_CONTEXT_KEYWORDS):
-    #     return False
-
-    return True
+    # Accept safety keywords OR food/brand context keywords (broadened)
+    all_keywords = SAFETY_KEYWORDS + FOOD_CONTEXT_KEYWORDS
+    return any(keyword in text for keyword in all_keywords)
 
 
 def parse_article_date(entry):
@@ -112,10 +108,12 @@ def resolve_image(entry, link):
     img = extract_thumbnail(entry)
     if img and img.startswith("http"):
         return img
-    img = extract_image_from_article(link)
-    if img and img.startswith("http"):
-        return img
+    # Skip scraping the article webpage to prevent slow performance and timeouts
+    # img = extract_image_from_article(link)
+    # if img and img.startswith("http"):
+    #     return img
     return FALLBACK_IMAGE
+
 
 def format_date(date):
     if not date:
@@ -170,7 +168,7 @@ def fetch_product_news(product_name, max_articles=10):
         link = entry.link
         if link in seen:
             continue
-        if not is_recent(entry):
+        if not is_recent(entry, days=180):
             continue
         if not is_product_specific(entry, product_name):
             continue

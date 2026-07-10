@@ -1,13 +1,41 @@
-let codeReader = null;
+// ============================================================
+// LABEL PADEGHA SABH — Barcode Scanner v3.0 (html5-qrcode)
+// ============================================================
+
+let html5QrCode = null;
 let activeTab = 'camera';
 let scanHandled = false;
-let cameraStream = null;
+let scannerRunning = false;
 
+// ── Debug Logger ──────────────────────────────────────────
+function logDebug(message, type = 'info') {
+    const logEl = document.getElementById('debug-log');
+    if (logEl) {
+        logEl.style.display = 'block';
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        const ts = new Date().toLocaleTimeString();
+        entry.textContent = `[${ts}] ${message}`;
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+    if (type === 'error') {
+        console.error(`[BarcodeScanner] ${message}`);
+    } else if (type === 'warn') {
+        console.warn(`[BarcodeScanner] ${message}`);
+    } else {
+        console.log(`[BarcodeScanner] ${message}`);
+    }
+}
+
+// ── DOM Ready ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+    logDebug('Page loaded, initializing scanner...');
     initializeScannerUI();
-    startCamera();
+    startScanner();
 });
 
+// ── UI Initialization ────────────────────────────────────
 function initializeScannerUI() {
     document.querySelectorAll('.method-tab').forEach(button => {
         button.addEventListener('click', () => {
@@ -19,15 +47,40 @@ function initializeScannerUI() {
     if (manualInput) {
         manualInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
-                goWithBarcode();
+                logDebug('Manual input Enter pressed');
+                fetchDetectedBarcode();
             }
         });
     }
+
+    const detectedInput = document.getElementById('detectedBarcodeInput');
+    if (detectedInput) {
+        detectedInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                logDebug('Detected input Enter pressed');
+                fetchDetectedBarcode();
+            }
+        });
+    }
+
+    logDebug('UI initialized');
+}
+
+function resetDetectedBarcodeUI() {
+    scanHandled = false;
+    const detectedInput = document.getElementById('detectedBarcodeInput');
+    const status = document.getElementById('scan-status');
+    const rescanBtn = document.getElementById('rescanBtn');
+
+    if (detectedInput) detectedInput.value = '';
+    if (rescanBtn) rescanBtn.style.display = 'none';
+    if (status) status.textContent = '🔍 Searching for barcode...';
+    logDebug('UI reset for new scan');
 }
 
 function switchTab(tab) {
     activeTab = tab;
-    scanHandled = false;
+    logDebug(`Switching to tab: ${tab}`);
 
     document.querySelectorAll('.method-tab').forEach(tabButton => {
         tabButton.classList.toggle('active', tabButton.dataset.tab === tab);
@@ -38,145 +91,273 @@ function switchTab(tab) {
     });
 
     if (tab === 'camera') {
-        startCamera();
+        resetDetectedBarcodeUI();
+        startScanner();
     } else {
-        stopCamera();
+        stopScanner();
+        if (tab === 'manual') {
+            scanHandled = false;
+        }
     }
 }
 
-async function startCamera() {
-    if (activeTab !== 'camera') return;
+// ═══════════════════════════════════════════════════════════
+// HTML5-QRCODE SCANNER
+// ═══════════════════════════════════════════════════════════
 
-    const video = document.getElementById('video');
-    const status = document.getElementById('scan-status');
-
-    if (!video) {
+async function startScanner() {
+    if (activeTab !== 'camera') {
+        logDebug('Not on camera tab, skipping scanner start');
         return;
     }
 
-    if (!window.ZXing) {
+    if (scannerRunning) {
+        logDebug('Scanner already running');
+        return;
+    }
+
+    const readerEl = document.getElementById('reader');
+    if (!readerEl) {
+        logDebug('Reader element not found', 'error');
+        return;
+    }
+
+    // Check if html5-qrcode library loaded
+    if (typeof Html5Qrcode === 'undefined') {
+        logDebug('html5-qrcode library not loaded! Check internet connection.', 'error');
+        const status = document.getElementById('scan-status');
         if (status) {
-            status.textContent = '⚠️ Scanner library did not load. Please use manual entry.';
+            status.textContent = '⚠️ Scanner library failed to load. Use manual entry.';
         }
         return;
     }
 
-    if (codeReader) {
-        if (status) {
-            status.textContent = '📷 Camera is already running.';
-        }
-        return;
-    }
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        if (status) {
-            status.textContent = '⚠️ Camera is not supported in this browser. Please enter the barcode manually.';
-        }
-        return;
-    }
-
-    if (status) {
-        status.textContent = '📷 Opening camera…';
-    }
+    logDebug('Initializing html5-qrcode scanner...');
 
     try {
-        stopCamera();
+        // Stop any previous scanner
+        await stopScanner();
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { ideal: 'environment' }
-            }
-        });
+        html5QrCode = new Html5Qrcode("reader");
+        logDebug('Html5Qrcode instance created');
 
-        cameraStream = stream;
-        video.srcObject = stream;
-        await video.play();
+        const config = {
+            fps: 20,
+            qrbox: { width: 300, height: 200 },
+            aspectRatio: 1.333,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.DATA_MATRIX,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.CODABAR,
+                Html5QrcodeSupportedFormats.RSS_14,
+                Html5QrcodeSupportedFormats.RSS_EXPANDED
+            ]
+        };
 
-        codeReader = new window.ZXing.BrowserMultiFormatReader();
-        codeReader.decodeFromVideoElement(video, (result, error) => {
-            if (result) {
-                handleBarcodeResult(result.getText());
-            }
+        logDebug('Starting camera with config: fps=20, formats=all');
 
-            if (error && !(error instanceof window.ZXing.NotFoundException)) {
-                console.error(error);
-                if (status) {
-                    status.textContent = '⚠️ Camera error. Please try again or use manual entry.';
-                }
-            }
-        });
+        await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+        );
 
+        scannerRunning = true;
+        logDebug('✅ Camera started successfully - scanning live!', 'success');
+
+        const status = document.getElementById('scan-status');
         if (status) {
             status.textContent = '📷 Camera ready — scanning live.';
         }
+
     } catch (error) {
-        console.error(error);
+        scannerRunning = false;
+        logDebug(`Camera start failed: ${error.message}`, 'error');
+        console.error('Full error:', error);
+
+        const status = document.getElementById('scan-status');
         if (status) {
-            status.textContent = '⚠️ Camera access was blocked. Please allow access once and try again, or enter the barcode manually.';
+            if (error.message.includes('NotAllowedError')) {
+                status.textContent = '⚠️ Camera access blocked. Allow camera access and refresh.';
+            } else if (error.message.includes('NotFoundError')) {
+                status.textContent = '⚠️ No camera found on this device.';
+            } else {
+                status.textContent = `⚠️ Camera error: ${error.message.substring(0, 50)}`;
+            }
         }
     }
 }
 
-function stopCamera() {
-    if (codeReader) {
+function onScanSuccess(decodedText, decodedResult) {
+    logDebug(`✅ Barcode detected: ${decodedText}`, 'success');
+    logDebug(`Result format: ${decodedResult?.result?.format || 'unknown'}`);
+
+    handleBarcodeResult(decodedText);
+}
+
+function onScanFailure(error) {
+    // Ignore "No barcode found" errors (they're normal)
+    if (error && error.includes('NotFoundException')) {
+        return;
+    }
+    if (error && error.includes('no scan')) {
+        return;
+    }
+    // Only log non-standard scan failures
+    if (error && !scanHandled) {
+        logDebug(`Scan frame: ${error?.substring?.(0, 40) || 'processing...'}`, 'warn');
+    }
+}
+
+async function stopScanner() {
+    if (html5QrCode) {
         try {
-            codeReader.reset();
+            logDebug('Stopping scanner...');
+            await html5QrCode.stop();
+            html5QrCode.clear();
+            logDebug('Scanner stopped');
         } catch (error) {
-            console.warn('Scanner reset warning:', error);
+            logDebug(`Stop scanner warning: ${error.message}`, 'warn');
         }
-        codeReader = null;
+        html5QrCode = null;
+        scannerRunning = false;
     }
 
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-
+    // Also stop any legacy video elements
     const video = document.getElementById('video');
-    if (video) {
-        video.pause();
-        video.srcObject = null;
+    if (video && video.srcObject) {
+        try {
+            const stream = video.srcObject;
+            stream.getTracks().forEach(track => track.stop());
+            video.pause();
+            video.srcObject = null;
+            logDebug('Legacy video stopped');
+        } catch (e) {
+            // ignore
+        }
     }
 }
+
+// ═══════════════════════════════════════════════════════════
+// BARCODE RESULT HANDLING
+// ═══════════════════════════════════════════════════════════
 
 function handleBarcodeResult(barcode) {
     const normalized = String(barcode || '').trim();
-    if (!normalized || scanHandled) return;
-
-    scanHandled = true;
-    const status = document.getElementById('scan-status');
-    if (status) {
-        status.textContent = `✅ Barcode detected: ${normalized}`;
-    }
-
-    localStorage.setItem('scannedBarcode', normalized);
-    const targetUrl = `product-result.html?barcode=${encodeURIComponent(normalized)}`;
-    setTimeout(() => {
-        window.location.href = targetUrl;
-    }, 300);
-}
-
-function goWithBarcode() {
-    const barcode = document.getElementById('manualBarcodeInput')?.value?.trim();
-    if (!barcode) {
-        showToast('Please enter a barcode number.', 'warning');
+    if (!normalized) {
+        logDebug('Empty barcode, ignoring', 'warn');
         return;
     }
 
+    if (scanHandled) {
+        logDebug(`Duplicate scan prevented: ${normalized}`);
+        return;
+    }
+
+    scanHandled = true;
+    logDebug(`🎯 Barcode captured: ${normalized}`, 'success');
+
+    const status = document.getElementById('scan-status');
+    const detectedInput = document.getElementById('detectedBarcodeInput');
+    const manualInput = document.getElementById('manualBarcodeInput');
+    const rescanBtn = document.getElementById('rescanBtn');
+
+    if (status) {
+        status.textContent = `✅ Barcode: ${normalized}`;
+    }
+
+    if (detectedInput) detectedInput.value = normalized;
+    if (manualInput) manualInput.value = normalized;
+    if (rescanBtn) rescanBtn.style.display = 'block';
+
+    localStorage.setItem('scannedBarcode', normalized);
+    logDebug(`Barcode saved to localStorage: ${normalized}`);
+
+    // Stop scanning to save battery
+    logDebug('Pausing scanner after detection...');
+    stopScanner();
+
+    // Auto-navigate after short delay so user can see the detected barcode
+    logDebug('Auto-navigating to product-result in 800ms...');
+    setTimeout(() => {
+        window.location.href = `product-result.html?barcode=${encodeURIComponent(normalized)}`;
+    }, 800);
+}
+
+function goWithBarcode() {
+    fetchDetectedBarcode();
+}
+
+function getBarcodeValue() {
+    const detected = document.getElementById('detectedBarcodeInput')?.value?.trim();
+    const manual = document.getElementById('manualBarcodeInput')?.value?.trim();
+    const stored = localStorage.getItem('scannedBarcode')?.trim();
+    const value = detected || manual || stored || '';
+    logDebug(`getBarcodeValue: detected="${detected}" manual="${manual}" stored="${stored}" -> "${value}"`);
+    return value;
+}
+
+function fetchDetectedBarcode() {
+    const barcode = getBarcodeValue();
+    logDebug(`fetchDetectedBarcode called with barcode: "${barcode}"`);
+
+    if (!barcode) {
+        logDebug('No barcode to fetch - showing alert', 'warn');
+        alert('Please scan a barcode or enter the number manually.');
+        return;
+    }
+
+    // Validate barcode format (allow alphanumeric)
+    if (!/^[0-9]{8,14}$/.test(barcode)) {
+        logDebug(`Non-standard barcode format: ${barcode}`, 'warn');
+    }
+
     localStorage.setItem('scannedBarcode', barcode);
+    logDebug(`Navigating to product-result.html?barcode=${encodeURIComponent(barcode)}`);
     window.location.href = `product-result.html?barcode=${encodeURIComponent(barcode)}`;
+}
+
+function rescanBarcode() {
+    logDebug('Rescan requested');
+    resetDetectedBarcodeUI();
+    startScanner();
 }
 
 function handleImageUpload(event) {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+        logDebug('No file selected for upload', 'warn');
+        return;
+    }
+
+    logDebug(`Image uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
 
     const reader = new FileReader();
     reader.onload = () => {
         const base64Str = reader.result.split(',')[1];
         localStorage.setItem('scannedImageBase64', base64Str);
         localStorage.removeItem('scannedBarcode');
+        logDebug('Image saved to localStorage, navigating to product-result.html');
         window.location.href = 'product-result.html';
+    };
+    reader.onerror = () => {
+        logDebug('FileReader error reading image', 'error');
     };
     reader.readAsDataURL(file);
 }
+
+// ── Expose functions globally for onclick handlers ────────
+window.switchTab = switchTab;
+window.fetchDetectedBarcode = fetchDetectedBarcode;
+window.rescanBarcode = rescanBarcode;
+window.goWithBarcode = goWithBarcode;
+window.handleImageUpload = handleImageUpload;

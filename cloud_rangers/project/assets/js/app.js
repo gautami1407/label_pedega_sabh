@@ -4,7 +4,7 @@
 // Back to Top, Dark Mode, API Integration
 // ============================================================
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "http://127.0.0.1:8000";
 
 // ── Toast Notification System ──
 function showToast(message, type = 'success', duration = 3000) {
@@ -121,7 +121,11 @@ function checkAuth() {
     const protectedPages = ['dashboard.html', 'ai-chat.html', 'health-profile.html', 'product-result.html', 'scanner.html'];
 
     if (!isLoggedIn && protectedPages.includes(currentPage)) {
-        window.location.href = 'login.html';
+        // Auto-login in demo mode for seamless testing
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', 'Demo User');
+        localStorage.setItem('userEmail', 'demo@labelpadega.com');
+        console.log('[Auth] Auto-login for demo mode');
     }
 }
 
