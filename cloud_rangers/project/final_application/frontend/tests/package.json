@@ -1,0 +1,13 @@
+{
+  "name": "scanner-playwright-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for barcode scanner",
+  "scripts": {
+    "test": "npx playwright test",
+    "install-browsers": "npx playwright install chromium",
+    "download-assets": "node download-assets.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

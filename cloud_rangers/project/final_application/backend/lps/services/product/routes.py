@@ -22,6 +22,8 @@ from lps.services.profile.service import ProfileService
 from lps.shared.db.postgres import get_db
 from lps.shared.models.user import User
 from lps.shared.utils.barcode import validate_barcode
+import os
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -277,3 +279,20 @@ def chat(payload: ChatRequest, _user: User | None = Depends(get_optional_user)):
     if not query:
         raise HTTPException(status_code=400, detail="No message provided")
     return product_service.chat(query, payload.context)
+
+
+# Diagnostic logging endpoint for scanner diagnostics (writes to backend/logs)
+@router.post("/api/v1/scan/logs")
+def receive_scan_logs(payload: dict):
+    try:
+        logs_dir = os.path.join(os.getcwd(), "logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        fname = f"scan_log_{int(time.time())}.json"
+        path = os.path.join(logs_dir, fname)
+        with open(path, "w", encoding="utf-8") as fh:
+            import json
+
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+        return {"status": "ok", "path": path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
