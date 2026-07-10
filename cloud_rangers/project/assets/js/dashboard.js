@@ -43,4 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') performManualSearch();
         });
     }
+
+    // Wire up the top navbar search bar to open manual search modal
+    const navbarSearchInput = document.querySelector('.search-bar input');
+    if (navbarSearchInput) {
+        navbarSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = navbarSearchInput.value.trim();
+                if (query) {
+                    localStorage.setItem("scannedBarcode", query);
+                    window.location.href = "product-result.html";
+                }
+            }
+        });
+        navbarSearchInput.addEventListener('focus', showManualSearch);
+    }
 });

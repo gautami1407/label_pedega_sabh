@@ -159,7 +159,7 @@ function handleBarcodeResult(barcode) {
 function goWithBarcode() {
     const barcode = document.getElementById('manualBarcodeInput')?.value?.trim();
     if (!barcode) {
-        alert('Please enter a barcode number.');
+        showToast('Please enter a barcode number.', 'warning');
         return;
     }
 

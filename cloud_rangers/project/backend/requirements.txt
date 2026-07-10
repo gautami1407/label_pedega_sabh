@@ -1,4 +1,5 @@
-streamlit
+fastapi
+uvicorn
 pandas
 pillow
 opencv-python-headless

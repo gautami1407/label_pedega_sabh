@@ -30,15 +30,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                        <a class="nav-link" href="health-profile.html">View Profile</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#six-factors">Intelligence Engine</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#impact">Our Impact</a>
-                    </li>
-                    <li class="nav-item ms-lg-3">
+                    <li class="nav-item ms-lg-2">
                         <a href="login.html" class="btn btn-outline-primary btn-sm">Login</a>
                     </li>
                     <li class="nav-item ms-2">
@@ -53,7 +47,7 @@
     <section class="hero-section">
         <div class="hero-background"></div>
         <div class="container">
-            <div class="row align-items-center min-vh-100">
+            <div class="row align-items-center" style="min-height: calc(100vh - 80px);">
                 <div class="col-lg-6 hero-content fade-in">
                     <div class="hero-badge mb-4">
                         <i class="bi bi-shield-check"></i>
@@ -70,11 +64,11 @@
                             <i class="bi bi-person-plus"></i>
                             Register Now
                         </a>
-                        <a href="login.html" class="btn btn-outline-light btn-lg cta-btn ms-3 btn-col">
+                        <a href="login.html" class="btn btn-outline-light btn-lg cta-btn ms-3">
                             <i class="bi bi-box-arrow-in-right"></i>
                             Login
                         </a>
-                        <a href="dashboard.html" class="btn btn-success btn-lg cta-btn ms-3">
+                        <a href="dashboard.html" class="btn btn-success cta-btn ms-3" style="padding: 8px 18px; font-size: 13px;">
                             <i class="bi bi-upc-scan"></i>
                             Scan Now
                         </a>
@@ -104,7 +98,7 @@
     </section>
 
     <!-- Six-Factor Intelligence Engine Section -->
-    <section id="six-factors" class="section-padding">
+    <section id="six-factors" class="section-padding reveal">
         <div class="container">
             <div class="section-header text-center mb-5 fade-in-up">
                 <div class="section-badge mb-3">
@@ -206,7 +200,7 @@
     </section>
 
     <!-- How It Works Section -->
-    <section id="how-it-works" class="section-padding bg-light-gradient">
+    <section id="how-it-works" class="section-padding bg-light-gradient reveal">
         <div class="container">
             <div class="section-header text-center mb-5 fade-in-up">
                 <div class="section-badge mb-3">
@@ -260,7 +254,7 @@
     </section>
 
     <!-- Impact & Alignment Section -->
-    <section id="impact" class="section-padding">
+    <section id="impact" class="section-padding reveal">
         <div class="container">
             <div class="section-header text-center mb-5 fade-in-up">
                 <div class="section-badge mb-3">
@@ -318,6 +312,14 @@
             </div>
         </div>
     </section>
+
+    <!-- Scroll Down Indicator -->
+    <div class="scroll-indicator" aria-hidden="true">
+        <span class="scroll-text">Scroll to explore</span>
+        <div class="scroll-mouse">
+            <div class="scroll-dot"></div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">

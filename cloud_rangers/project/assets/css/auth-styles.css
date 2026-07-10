@@ -1,4 +1,4 @@
-/* Authentication Pages Styles */
+/* Authentication Pages Styles - Light Theme Only */
 
 .auth-body {
     min-height: 100vh;
@@ -59,7 +59,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     text-decoration: none;
     font-weight: 500;
     font-size: 14px;
@@ -76,13 +76,13 @@
 }
 
 .auth-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--white);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--gray-200);
     border-radius: 24px;
     padding: 50px 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     width: 100%;
     max-width: 100%;
 }
@@ -108,19 +108,19 @@
     font-family: var(--font-display);
     font-size: 32px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
 .auth-subtitle {
     font-size: 16px;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     margin-bottom: 30px;
 }
 
 .auth-form .form-label {
     font-weight: 600;
-    color: var(--gray-700);
+    color: var(--text-primary);
     margin-bottom: 8px;
     font-size: 14px;
     display: flex;
@@ -138,8 +138,13 @@
     border: 2px solid var(--gray-200);
     border-radius: 12px;
     font-size: 15px;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
     background: var(--white);
+    transition: all 0.3s ease;
+}
+
+.auth-form .form-control::placeholder {
+    color: var(--gray-400);
 }
 
 .auth-form .form-control:focus {
@@ -205,7 +210,7 @@
 
 .password-strength.medium::before {
     width: 66%;
-    background: #F59E0B;
+    background: var(--accent-amber);
 }
 
 .password-strength.strong::before {
@@ -231,7 +236,7 @@
 
 .form-check-label {
     font-size: 14px;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     cursor: pointer;
     margin-left: 8px;
 }
@@ -267,9 +272,9 @@
 
 .auth-divider span {
     position: relative;
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--white);
     padding: 0 20px;
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-size: 14px;
     font-weight: 500;
 }
@@ -280,6 +285,8 @@
     font-size: 15px;
     border: 2px solid var(--gray-200);
     border-radius: 12px;
+    color: var(--text-primary);
+    background: var(--white);
     transition: all 0.3s ease;
 }
 
@@ -296,7 +303,7 @@
 
 .auth-footer p {
     font-size: 14px;
-    color: var(--gray-600);
+    color: var(--text-secondary);
 }
 
 .invalid-feedback {
@@ -364,13 +371,13 @@
 
 /* Survey Styles */
 .survey-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--white);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--gray-200);
     border-radius: 24px;
     padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
 }
 
 .survey-header {
@@ -381,13 +388,13 @@
     font-family: var(--font-display);
     font-size: 28px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
 .survey-subtitle {
     font-size: 16px;
-    color: var(--gray-600);
+    color: var(--text-secondary);
 }
 
 .progress-indicator {
@@ -411,7 +418,7 @@
 .survey-section-title {
     font-size: 18px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 16px;
     display: flex;
     align-items: center;
@@ -459,7 +466,7 @@
     cursor: pointer;
     margin: 0;
     font-weight: 500;
-    color: var(--gray-700);
+    color: var(--text-primary);
     flex: 1;
 }
 
@@ -477,17 +484,6 @@
 .other-input-container.show {
     display: block;
     animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* Responsive */
