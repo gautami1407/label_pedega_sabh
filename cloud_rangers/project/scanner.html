@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner - Label Padegha Sabh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard-styles.css">
+    <style>
+        .scanner-page {
+            background: var(--gray-900);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .scanner-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .scanner-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .scanner-header p {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 1.5rem;
+        }
+
+        #video-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 4/3;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .scan-area {
+            width: 65%;
+            aspect-ratio: 1;
+            border: 3px solid var(--primary-emerald);
+            border-radius: 16px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            animation: scanPulse 2s ease-in-out infinite;
+        }
+
+        .scan-line {
+            position: absolute;
+            left: 17.5%;
+            right: 17.5%;
+            height: 2px;
+            background: var(--primary-emerald);
+            box-shadow: 0 0 10px var(--primary-emerald);
+            animation: scanLine 2s linear infinite;
+        }
+
+        @keyframes scanLine {
+            0% {
+                top: 17.5%;
+            }
+
+            50% {
+                top: 82.5%;
+            }
+
+            100% {
+                top: 17.5%;
+            }
+        }
+
+        @keyframes scanPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 20px var(--primary-emerald-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 40px var(--primary-emerald-glow);
+            }
+        }
+
+        #scan-status {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+        }
+
+        .manual-input-area {
+            margin-top: 1.5rem;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateX(-4px);
+        }
+
+        .input-barcode {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .input-barcode::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-barcode:focus {
+            outline: none;
+            border-color: var(--primary-emerald);
+            box-shadow: 0 0 0 3px var(--primary-emerald-glow);
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .scan-btn-go {
+            background: var(--gradient-primary);
+            border: none;
+            color: #fff;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 0.75rem;
+        }
+
+        .scan-btn-go:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-emerald);
+        }
+
+        .scanner-methods {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .method-tab {
+            flex: 1;
+            padding: 0.6rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .method-tab.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--primary-emerald);
+            color: var(--primary-emerald-light);
+        }
+
+        .method-panel {
+            display: none;
+        }
+
+        .method-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="dashboard.html" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+
+    <div class="scanner-page">
+        <div class="scanner-card fade-in">
+            <div class="scanner-header">
+                <h1>📷 Scan Product</h1>
+                <p>Point your camera at a barcode, enter it manually, or upload an image</p>
+            </div>
+
+            <div class="scanner-methods">
+                <button class="method-tab active" onclick="switchTab('camera')"><i class="bi bi-camera"></i>
+                    Camera</button>
+                <button class="method-tab" onclick="switchTab('manual')"><i class="bi bi-keyboard"></i> Manual</button>
+                <button class="method-tab" onclick="switchTab('image')"><i class="bi bi-image"></i> Image</button>
+            </div>
+
+            <!-- Camera Tab -->
+            <div class="method-panel active mt-3" id="panel-camera">
+                <div id="video-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="scanner-overlay">
+                        <div class="scan-area"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                    <div id="scan-status">🔍 Searching for barcode...</div>
+                </div>
+                <p class="text-muted small mt-2">Auto-detects and redirects instantly when a barcode is found.</p>
+            </div>
+
+            <!-- Manual Tab -->
+            <div class="method-panel mt-3" id="panel-manual">
+                <p class="text-muted small mb-2">Enter the barcode number printed on the product:</p>
+                <input type="text" id="manualBarcodeInput" inputmode="numeric" class="input-barcode"
+                    placeholder="e.g. 8901030895489">
+                <button class="scan-btn-go mt-2" onclick="goWithBarcode()">
+                    <i class="bi bi-search"></i> Analyze Product
+                </button>
+            </div>
+
+            <!-- Image Tab -->
+            <div class="method-panel mt-3" id="panel-image">
+                <p class="text-muted small mb-2">Upload a photo of the product's ingredient label:</p>
+                <input type="file" id="imageFileInput" accept="image/*" style="display:none"
+                    onchange="handleImageUpload(event)">
+                <button class="scan-btn-go" onclick="document.getElementById('imageFileInput').click()">
+                    <i class="bi bi-upload"></i> Upload Label Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+    <script>
+        let codeReader = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + tab).classList.add('active');
+            if (tab === 'camera') startCamera();
+            else stopCamera();
+        }
+
+        function startCamera() {
+            if (codeReader) return;
+            codeReader = new ZXing.BrowserMultiFormatReader();
+            const video = document.getElementById('video');
+            codeReader.listVideoInputDevices().then(devices => {
+                const deviceId = devices[0]?.deviceId;
+                if (!deviceId) { document.getElementById('scan-status').textContent = '❌ No camera found.'; return; }
+                codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+                    if (result) {
+                        document.getElementById('scan-status').textContent = '✅ Barcode found! Redirecting...';
+                        localStorage.setItem('scannedBarcode', result.text);
+                        setTimeout(() => window.location.href = 'product-result.html', 500);
+                    }
+                });
+            }).catch(err => {
+                document.getElementById('scan-status').textContent = '❌ Camera access denied.';
+            });
+        }
+
+        function stopCamera() {
+            if (codeReader) { codeReader.reset(); codeReader = null; }
+        }
+
+        function goWithBarcode() {
+            const barcode = document.getElementById('manualBarcodeInput').value.trim();
+            if (!barcode) { alert('Please enter a barcode number.'); return; }
+            localStorage.setItem('scannedBarcode', barcode);
+            window.location.href = 'product-result.html';
+        }
+
+        document.getElementById('manualBarcodeInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') goWithBarcode();
+        });
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const base64Str = e.target.result.split(',')[1];
+                localStorage.setItem('scannedImageBase64', base64Str);
+                localStorage.removeItem('scannedBarcode');
+                window.location.href = 'product-result.html';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Start camera on load
+        startCamera();
+    </script>
+</body>
+
+</html>

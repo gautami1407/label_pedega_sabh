@@ -1,0 +1,61 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets.toml
+*.secrets.toml
+!secrets.toml.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and local cache
+*.log
+logs/
+.product_checker_cache/
+
+# Node (future admin/frontend tooling)
+node_modules/
+
+# Flutter (future mobile app)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Temporary and backup files
+*.bak
+*.tmp
+*.orig

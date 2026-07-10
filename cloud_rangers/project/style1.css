@@ -1,0 +1,130 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+}
+
+#loadingContainer {
+  text-align: center;
+  padding: 5rem;
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.product-wrapper {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 1.5rem 2rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-header-card {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.product-left img {
+  width: 200px;
+  border-radius: 12px;
+  object-fit: contain;
+  border: 1px solid #ddd;
+}
+
+.product-placeholder {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4rem;
+  background-color: #eee;
+  border-radius: 12px;
+}
+
+.product-right h1 {
+  font-size: 2rem;
+  margin-bottom: 0.2rem;
+}
+
+.product-right p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.concern-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: #fff;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.concern-badge.low { background-color: #4caf50; }
+.concern-badge.moderate { background-color: #ff9800; }
+.concern-badge.high { background-color: #f44336; }
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  background-color: #fafafa;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.info-card:hover { transform: translateY(-3px); }
+
+.info-card h3 { margin-bottom: 0.8rem; font-size: 1.2rem; color: #222; }
+.info-card p, .info-card li { font-size: 0.95rem; line-height: 1.4; }
+
+.info-card ul { padding-left: 1.2rem; }
+
+.allergen-danger { color: #f44336; font-weight: bold; }
+.allergen-safe { color: #4caf50; font-weight: bold; }
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.footer-note { text-align: center; margin-top: 2rem; color: #999; font-size: 0.85rem; }
+
+#news-section {
+  max-width: 1000px;
+  margin: 2rem auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.news-card {
+  display: flex;
+  gap: 1rem;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+}
+
+.news-image {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.news-card div { padding: 0.5rem 1rem; }
+.news-meta { font-size: 0.8rem; color: #666; margin-bottom: 0.2rem; }
+.news-title { font-weight: bold; margin-bottom: 0.2rem; }
+.news-card a { color: #2196f3; text-decoration: none; font-size: 0.9rem; }
+.news-card a:hover { text-decoration: underline; }
