@@ -298,32 +298,52 @@ function goWithBarcode() {
 }
 
 function getBarcodeValue() {
+    // ── CRITICAL FIX (Bug #6): Prioritise the ACTIVE TAB's live input.
+    // Previously, a stale localStorage value could silently override whatever
+    // the user had just typed in the Manual tab.
     const detected = document.getElementById('detectedBarcodeInput')?.value?.trim();
-    const manual = document.getElementById('manualBarcodeInput')?.value?.trim();
-    const stored = localStorage.getItem('scannedBarcode')?.trim();
-    const value = detected || manual || stored || '';
-    logDebug(`getBarcodeValue: detected="${detected}" manual="${manual}" stored="${stored}" -> "${value}"`);
+    const manual   = document.getElementById('manualBarcodeInput')?.value?.trim();
+    const stored   = localStorage.getItem('scannedBarcode')?.trim();
+
+    // If the user is on the manual tab and has typed something, that wins.
+    let value = '';
+    if (activeTab === 'manual' && manual) {
+        value = manual;
+        logDebug(`getBarcodeValue: using manual input "${manual}"`);
+        // Clear stale stored value so it doesn't interfere on the result page
+        localStorage.removeItem('scannedBarcode');
+    } else if (activeTab === 'camera' && detected) {
+        value = detected;
+        logDebug(`getBarcodeValue: using detected camera input "${detected}"`);
+    } else {
+        // Fallback chain: detected → manual → stored
+        value = detected || manual || stored || '';
+        logDebug(`getBarcodeValue: fallback chain -> detected="${detected}" manual="${manual}" stored="${stored}" -> "${value}"`);
+    }
     return value;
 }
 
 function fetchDetectedBarcode() {
     const barcode = getBarcodeValue();
-    logDebug(`fetchDetectedBarcode called with barcode: "${barcode}"`);
+    logDebug(`fetchDetectedBarcode called — barcode: "${barcode}" (activeTab: ${activeTab})`);
 
     if (!barcode) {
-        logDebug('No barcode to fetch - showing alert', 'warn');
+        logDebug('No barcode to fetch — showing alert', 'warn');
         alert('Please scan a barcode or enter the number manually.');
         return;
     }
 
-    // Validate barcode format (allow alphanumeric)
-    if (!/^[0-9]{8,14}$/.test(barcode)) {
-        logDebug(`Non-standard barcode format: ${barcode}`, 'warn');
+    // Log format check (informational only — don't block non-standard codes)
+    if (/^[0-9]{8,14}$/.test(barcode)) {
+        logDebug(`Barcode format: standard numeric (${barcode.length} digits)`, 'success');
+    } else {
+        logDebug(`Non-standard barcode format: "${barcode}" — proceeding anyway`, 'warn');
     }
 
     localStorage.setItem('scannedBarcode', barcode);
-    logDebug(`Navigating to product-result.html?barcode=${encodeURIComponent(barcode)}`);
-    window.location.href = `product-result.html?barcode=${encodeURIComponent(barcode)}`;
+    const dest = `product-result.html?barcode=${encodeURIComponent(barcode)}`;
+    logDebug(`✅ Navigating to: ${dest}`, 'success');
+    window.location.href = dest;
 }
 
 function rescanBarcode() {

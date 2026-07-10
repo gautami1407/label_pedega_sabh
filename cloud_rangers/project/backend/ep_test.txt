@@ -1,0 +1,11 @@
+=== Testing endpoints === 
+--- GET / (index) --- 
+STATUS: 200
+--- GET /health --- 
+{"status":"healthy","db_available":true,"utils_available":true}
+--- GET /scanner.html --- 
+STATUS: 200
+--- GET /dashboard.html --- 
+STATUS: 200
+--- POST /api/analyze-product (Maggi barcode) --- 
+score= 53 product= Maggi Masala Noodles

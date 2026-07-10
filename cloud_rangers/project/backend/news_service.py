@@ -8,32 +8,24 @@ from datetime import datetime, timedelta
 FALLBACK_IMAGE = "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&q=80"
 
 SAFETY_KEYWORDS = [
-    "recall", "recalled",
-    "contamination", "contaminated",
-    "banned", "unsafe",
-    "warning", "alert",
-    "fssai", "fda",
-    "mislabel", "mislabeling",
-    "mislabelled",
-    "health risk",
-    "bacteria",
-    "salmonella",
-    "listeria",
-    "food poisoning",
-    "violation",
-    "failed test",
-    "quality test"
+    "recall", "recalled", "contamination", "contaminated",
+    "banned", "unsafe", "warning", "alert", "fssai", "fda",
+    "mislabel", "mislabeling", "health risk", "bacteria",
+    "salmonella", "listeria", "food poisoning", "violation",
+    "failed test", "quality test", "unhealthy", "dangerous",
+    "adulterated", "substandard", "penalty", "fine", "seized",
+    "harmful", "cancer", "carcinogen", "toxic", "lead",
+    "pesticide", "heavy metal", "e. coli", "ecoli"
 ]
 
 FOOD_CONTEXT_KEYWORDS = [
-    "food","noodles","chocolate","milk","biscuit","snack","drink",
-    "beverage","product","brand","pack","fssai","fda","factory",
-    "consumer","ingredient"
+    "food", "noodles", "chocolate", "milk", "biscuit", "snack",
+    "drink", "beverage", "product", "brand", "pack", "fssai",
+    "fda", "factory", "consumer", "ingredient", "nutrition",
+    "calories", "sugar", "salt", "fat", "health", "diet",
+    "processed", "additive", "preservative", "colour", "flavor"
 ]
 
-# -----------------------------
-# Helper functions
-# -----------------------------
 def is_product_specific(entry, product_name):
     text = ""
     if hasattr(entry, "title"):
@@ -42,14 +34,18 @@ def is_product_specific(entry, product_name):
         text += entry.summary.lower()
 
     product_name = product_name.lower().strip()
-    # check if any word (3+ chars) from product_name is in text
+
+    # Extract meaningful words (3+ chars) from product name
     name_words = [w for w in product_name.split() if len(w) >= 3]
     if not name_words:
         return False
+
+    # Must mention at least one word from the product name
     if not any(word in text for word in name_words):
         return False
 
-    # Accept safety keywords OR food/brand context keywords (broadened)
+    # Pass if it mentions ANY safety OR food context keyword
+    # This is intentionally broad — we want relevant news, not just recalls
     all_keywords = SAFETY_KEYWORDS + FOOD_CONTEXT_KEYWORDS
     return any(keyword in text for keyword in all_keywords)
 

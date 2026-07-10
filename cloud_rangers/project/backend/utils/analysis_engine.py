@@ -301,21 +301,52 @@ COUNTRY_MAP = [
     ("🇯🇵 Japan", "japan"), ("🇸🇬 Singapore", "singapore"),
 ]
 
-def get_regulatory_status(ingredients):
+def get_regulatory_status(ingredients, regulatory_raw=None):
+    """Check regulatory status. Merges static regulations.csv with per-product CSV data."""
     results = []
+    combined = dict(REGULATIONS_DATA)
+
+    # Merge CSV's per-ingredient regulatory data if provided
+    if regulatory_raw:
+        for ing_key, country_map in regulatory_raw.items():
+            entry = {f: "Unknown" for _, f in COUNTRY_MAP}
+            entry["notes"] = ""
+            for country_str, status in country_map.items():
+                cl = country_str.lower()
+                if "fda" in cl or "usa" in cl:
+                    entry["fda"] = status
+                elif "efsa" in cl or "european" in cl:
+                    entry["efsa"] = status
+                elif "united kingdom" in cl or "uk" in cl:
+                    entry["uk"] = status
+                elif "canada" in cl:
+                    entry["canada"] = status
+                elif "australia" in cl:
+                    entry["australia"] = status
+                elif "japan" in cl:
+                    entry["japan"] = status
+                elif "singapore" in cl:
+                    entry["singapore"] = status
+                elif "fssai" in cl or "india" in cl:
+                    entry["fssai"] = status
+            combined[ing_key] = entry
+
     for ing in ingredients:
         il = ing.strip().lower()
-        entry = REGULATIONS_DATA.get(il)
+        entry = combined.get(il)
         if not entry:
-            for key, val in REGULATIONS_DATA.items():
+            for key, val in combined.items():
                 if key in il or il in key:
-                    entry = val; break
+                    entry = val
+                    break
         if not entry:
             continue
-        statuses = [{"country": label, "status": entry.get(field, "Unknown")} for label, field in COUNTRY_MAP]
+        statuses = [{"country": label, "status": entry.get(field, "Unknown")}
+                    for label, field in COUNTRY_MAP]
         has_concern = any(s["status"] not in ("Allowed", "Unknown") for s in statuses)
         if has_concern:
-            results.append({"ingredient": ing, "regulatory_status": statuses, "notes": entry.get("notes", "")})
+            results.append({"ingredient": ing, "regulatory_status": statuses,
+                             "notes": entry.get("notes", "")})
     return results
 
 # ── Step 9: News/recalls ──────────────────────────────────
@@ -353,7 +384,7 @@ def generate_ai_summary(product, nutrition, concern_score, allergens, personaliz
         if api_key and "your_gemini" not in api_key and "placeholder" not in api_key.lower():
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("models/gemini-1.5-flash")
             allergen_list = ", ".join(a["allergen"] for a in allergens) or "none"
             factors_list  = " | ".join(concern_score.get("factors", [])) or "none"
             prompt = (
@@ -417,7 +448,12 @@ def analyze_product(barcode, user_profile=None):
         "categories": product.get("categories", []),
         "nutriscore": product.get("nutriscore_grade", ""),
         "nova_group": product.get("nova_group"),
-        "source":     product.get("source", "OpenFoodFacts")
+        "source":     product.get("source", "OpenFoodFacts"),
+        # CSV-enriched fields
+        "health_note":      product.get("health_note", ""),
+        "health_concern":   product.get("health_concern", ""),
+        "consumer_note":    product.get("consumer_note", ""),
+        "key_differences":  product.get("key_differences", ""),
     }
 
     nutrition  = product.get("nutriments", {})
@@ -441,7 +477,7 @@ def analyze_product(barcode, user_profile=None):
     logger.info(f"[Pipeline] {len(allergens)} allergens")
 
     result["personalized_warnings"] = generate_personalized_warnings(nutrition, ingredients, allergens, user_profile)
-    result["regulatory"] = get_regulatory_status(ingredients)
+    result["regulatory"] = get_regulatory_status(ingredients, product.get("regulatory_raw", {}))
     logger.info(f"[Pipeline] {len(result['regulatory'])} regulatory concerns")
 
     result["news"]         = fetch_recall_news(product.get("name", ""))

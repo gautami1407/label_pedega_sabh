@@ -3,7 +3,6 @@ def normalize_product_data(api_data):
     if not api_data:
         return None
 
-    # categories can be a string (OFF) or already a list (fallback/USDA)
     cats_raw = api_data.get("categories", "")
     if isinstance(cats_raw, list):
         categories = [c.strip() for c in cats_raw if c.strip()]
@@ -24,7 +23,13 @@ def normalize_product_data(api_data):
         "countries":        api_data.get("countries", ""),
         "labels":           api_data.get("labels", ""),
         "packaging":        api_data.get("packaging", ""),
-        "source":           api_data.get("source", "Unknown")
+        "source":           api_data.get("source", "Unknown"),
+        # CSV-enriched fields (passed through unchanged)
+        "health_note":      api_data.get("health_note", ""),
+        "health_concern":   api_data.get("health_concern", ""),
+        "consumer_note":    api_data.get("consumer_note", ""),
+        "key_differences":  api_data.get("key_differences", ""),
+        "regulatory_raw":   api_data.get("regulatory_raw", {}),
     }
 
 

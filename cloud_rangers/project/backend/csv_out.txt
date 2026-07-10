@@ -1,0 +1,42 @@
+Total rows: 19
+All columns: ['id', 'product_name', 'brand', 'barcode_india', 'barcode_source_note', 'category', 'country_compared', 'india_ingredient_1', 'india_ingredient_2', 'india_ingredient_3', 'india_ingredient_4', 'india_ingredient_5', 'india_ingredient_6', 'india_ingredient_7', 'india_ingredient_8', 'india_ingredient_9', 'india_ingredient_10', 'other_country_ingredient_1', 'other_country_ingredient_2', 'other_country_ingredient_3', 'other_country_ingredient_4', 'other_country_ingredient_5', 'other_country_ingredient_6', 'other_country_ingredient_7', 'other_country_ingredient_8', 'other_country_ingredient_9', 'other_country_ingredient_10', 'key_differences', 'notable_additives', 'allergens', 'regulatory_difference', 'health_note', 'source', 'ingredient_explanation', 'ingredient_function', 'india_regulation', 'global_regulation', 'banned_country', 'restricted_country', 'regulatory_status', 'health_concern', 'consumer_note', 'verified_sources']
+
+=== Barcode + Product Name ===
+  ID=1 | barcode='' | name=Cerelac Wheat Based Cereal (6+ months) | brand=Nestle
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=2 | barcode='8901058851311' | name=Maggi 2-Minute Masala Noodles | brand=Nestle
+    note: Verified – Open Food Facts (Maggi Masala 2-Minute Noodles, Nestlé India, 70g); i
+  ID=3 | barcode='7622201149406' | name=Cadbury Dairy Milk (Classic Bar) | brand=Cadbury (Mondelez)
+    note: Likely match – listed on in.openfoodfacts.org (India OFF instance) as Cadbury Da
+  ID=4 | barcode='' | name=Red Bull Energy Drink | brand=Red Bull
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=5 | barcode='' | name=Lay's Classic Salted Potato Chips | brand=Lay's (PepsiCo)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=6 | barcode='' | name=Coca-Cola (Original) | brand=Coca-Cola
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=7 | barcode='' | name=Oreo Original Sandwich Biscuit | brand=Oreo (Mondelez / Cadbury)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=8 | barcode='' | name=Kellogg's Corn Flakes | brand=Kellogg's
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=9 | barcode='' | name=Heinz Tomato Ketchup | brand=Heinz (Kraft Heinz)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=10 | barcode='' | name=McDonald's French Fries | brand=McDonald's
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=11 | barcode='' | name=Skittles Original | brand=Skittles (Mars Wrigley)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=12 | barcode='8886467122392' | name=Pringles Original | brand=Pringles (Kellanova/Mars)
+    note: Verified – already cited in source data (Open Food Facts, Kellogg India Pvt. Ltd
+  ID=13 | barcode='' | name=KitKat (4-Finger Milk Chocolate) | brand=Nestle
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=14 | barcode='' | name=Domino's Pizza (Cheese Topping) | brand=Domino's Pizza
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=21 | barcode='' | name=M&M's Milk Chocolate | brand=M&M's (Mars Wrigley)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=22 | barcode='' | name=Knorr Bouillon / All Purpose Seasoning | brand=Knorr (Hindustan Unilever)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=23 | barcode='' | name=Cadbury Bournville (Dark Chocolate) | brand=Cadbury (Mondelez)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=24 | barcode='' | name=Doritos Nacho Cheese | brand=Doritos (PepsiCo / Frito-Lay)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 
+  ID=25 | barcode='' | name=Kinder Joy | brand=Kinder (Ferrero)
+    note: Not found/verified in this session – barcodes vary by pack size and change over 

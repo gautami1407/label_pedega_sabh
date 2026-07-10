@@ -216,6 +216,11 @@ def analyze_product_endpoint(request: AnalyzeProductRequest):
     Input:  barcode + optional user profile
     Output: complete analysis (concern score, ingredients, allergens,
             regulatory, warnings, news, AI summary)
+
+    NOTE (Bug #7 fix): Returns HTTP 200 even when a product is not found,
+    with {"error": "..."} in the body. The frontend JS checks `data.error`
+    — this only works on a 200 response. A 404/HTTPException was previously
+    silently swallowing the error message.
     """
     if not UTILS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Product analysis utils not available")
@@ -223,20 +228,22 @@ def analyze_product_endpoint(request: AnalyzeProductRequest):
     logger.info(f"=== /api/analyze-product barcode={request.barcode} ===")
 
     user_profile = {
-        "age": request.age,
-        "allergies": request.allergies or [],
+        "age":        request.age,
+        "allergies":  request.allergies  or [],
         "conditions": request.conditions or [],
-        "diet": request.diet or ""
+        "diet":       request.diet       or ""
     }
 
     result = run_product_analysis(request.barcode, user_profile)
 
     if result.get("error"):
-        logger.warning(f"Analysis failed: {result['error']}")
-        raise HTTPException(status_code=404, detail=result["error"])
+        logger.warning(f"Product not found: {result['error']}")
+        # Return 200 + error field so the frontend data.error check works
+        return {"error": result["error"]}
 
     logger.info(f"Analysis complete. Score={result.get('concern_score', {}).get('score', 'N/A')}")
     return result
+
 
 @app.get("/api/news")
 def news_endpoint(product_name: str, max_articles: int = 10):

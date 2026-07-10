@@ -1,0 +1,3 @@
+﻿Columns: ['id', 'product_name', 'brand', 'barcode_india', 'barcode_source_note', 'category', 'country_compared', 'india_ingredient_1', 'india_ingredient_2', 'india_ingredient_3']
+Rows: 3
+ID col sample: [1, 2, 3]

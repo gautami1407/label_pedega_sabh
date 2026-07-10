@@ -4,7 +4,7 @@
 // Back to Top, Dark Mode, API Integration
 // ============================================================
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = (window.location.protocol === 'file:') ? 'http://127.0.0.1:8000' : window.location.origin;
 
 // ── Toast Notification System ──
 function showToast(message, type = 'success', duration = 3000) {

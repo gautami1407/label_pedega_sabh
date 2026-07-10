@@ -1,0 +1,37 @@
+[Lookup] OFF: not found for 4005808227518
+[Lookup] All sources exhausted for barcode: 4005808227518
+=== 1. Testing OpenFoodFacts API directly ===
+  Maggi (local fallback): HTTP 200, status=0, name=NOT FOUND
+  KitKat (local fallback): HTTP 200, status=1, name=Prince Goût Chocolat au blé complet
+  Parle-G (local fallback): HTTP 200, status=0, name=NOT FOUND
+
+=== 2. Testing product_lookup directly ===
+  Maggi (local fallback): FOUND - Maggi Masala Noodles | source=Local fallback | ings=7
+  KitKat (local fallback): FOUND - KitKat 4 Finger | source=Local fallback | ings=12
+  Parle-G (local fallback): FOUND - Parle-G Biscuit | source=Local fallback | ings=8
+  KitKat UK (OpenFoodFacts): FOUND - Twix glacé | source=OpenFoodFacts | ings=33
+USDA Search Error: 403 Client Error: Forbidden for url: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=your_usda_api_key_here&query=4005808227518&pageSize=5&dataType=Branded&dataType=Foundation
+  Nivea (OpenFoodFacts): NOT FOUND
+  Pepsi (OpenFoodFacts): FOUND - Life Wtr pH balanced | source=OpenFoodFacts | ings=3
+
+=== 3. Testing full analyze_product pipeline ===
+RSS entries fetched: 46
+Title: Food Safety regulator orders Nestle to recall nine variants of Maggi noodles - The Hindu
+Title: US FDA gives clean chit to Maggi Noodles - ET BrandEquity
+Title: Nestlé's defence: It is only real (lead-free) Maggi when the noodles and masala are boiled in water - Scroll.in
+Title: FSSAI orders Nestle to take all 9 Maggi Noodle variants off the shelves - The Indian Express
+Title: Maggi unsafe, says food safety regulator, Nestle pulls noodles from stores - livemint.com
+  Maggi: score=53, level=High Concern
+  ingredients=['wheat flour', 'refined palm oil', 'salt']
+  allergens=['Wheat']
+  news count=0
+  ai_summary preview=Maggi Masala Noodles by Nestle has a concern score of 53/100 (High Concern). Key concerns: High Sodi
+
+=== 4. Testing HTTP endpoint ===
+  HTTP 200: product=Maggi Masala Noodles
+  score=53
+  num_ingredients=7
+  num_news=0
+
+=== 5. Check CORS headers ===
+  CORS header: *

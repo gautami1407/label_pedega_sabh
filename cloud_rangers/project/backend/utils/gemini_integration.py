@@ -17,7 +17,7 @@ class GeminiHandler:
         
         genai.configure(api_key=api_key)
         # Using gemini-1.5-pro as requested
-        self.model = genai.GenerativeModel('gemini-1.5-pro')
+        self.model = genai.GenerativeModel('models/gemini-1.5-flash')
         self.chat_session = None
 
     def explain_risks(self, product_name, ingredients, risks):

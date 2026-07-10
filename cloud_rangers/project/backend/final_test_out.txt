@@ -1,0 +1,9 @@
+=== 1. CSV direct lookup tests ===
+Traceback (most recent call last):
+  File "c:\Users\kalal\Desktop\labelpadega\404-girls\cloud_rangers\project\backend\final_test.py", line 14, in <module>
+    print(f"  \u2713 {name} -> {result['name']} | src={result['source']} | ings={len(result['ingredients_text'].split(','))}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\kalal\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 2: character maps to <undefined>

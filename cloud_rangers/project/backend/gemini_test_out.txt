@@ -1,0 +1,42 @@
+c:\Users\kalal\Desktop\labelpadega\404-girls\cloud_rangers\project\backend\gemini_test.py:15: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+Gemini key loaded: YES - AQ.Ab8RN6KJU...
+
+--- Testing Gemini API directly ---
+Gemini error: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+
+--- Testing barcode 8901058851311 via HTTP ---
+Product  : Maggi 2-Minute Masala Noodles by Nestle
+Source   : CSV + OpenFoodFacts
+Score    : 48/100 - High Concern
+Factors  : ['Very High Sodium (11.7g salt/100g)', 'High Saturated Fat (6.8g/100g)', 'Contains MSG']
+Allergens: ['Wheat', 'Peanut', 'Milk']
+Ingredients (30): ['wheat flour (maida)', 'edible vegetable oil', 'salt', 'wheat gluten', 'mixed spices']
+Regulatory: 0 concerns
+News     : 1 articles
+Nova     : Not Classified
+AI Summary: Maggi 2-Minute Masala Noodles by Nestle has a concern score of 48/100 (High Concern). Key concerns: Very High Sodium (11.7g salt/100g); High Saturated Fat (6.8g/100g); Contains MSG. Allergens detected
+
+FULL JSON (truncated):
+{
+  "barcode": "8901058851311",
+  "product": {
+    "name": "Maggi 2-Minute Masala Noodles",
+    "brand": "Nestle",
+    "image_url": "https://images.openfoodfacts.org/images/products/890/105/885/1311/front_en.3.400.jpg",
+    "categories": [
+      "Instant Noodles"
+    ],
+    "nutriscore": "unknown",
+    "nova_group": null,
+    "source": "CSV + OpenFoodFacts",
+    "health_note": "",
+    "health_concern": "Wheat Flour (Maida): Contains gluten; relevant only for those with coeliac disease or gluten sensitivity. | Edible Vegetable Oil: Higher in saturated fat than sunflower/canola/corn oil blends; frequent consumption adds more saturated fat to the diet. | Salt: High sodium intake is linked to elevated blood pressure risk; WHO recommends under 5g salt/day. | Mixed Spices: None identified. | Hydrolysed Groundnut Protein: May contain trace 3-MCPD/chloropropanols from acid hydrolysis, which EFSA has set limits for in some products; otherwise no acute concern. | Colour (150d): 4-MEI, a trace by-product of Class IV caramel colour manufacture, has been classified as a possible carcinogen by some assessments at high doses in animal studies; typical dietary exposure is well below levels of concern per JECFA/EFSA. | Vegetable Oil: Higher in unsaturated fat than palm oil; generally considered a favourable substitute for saturated fats. | Flavour Enhancer (621 / MSG): Classified Generally Recognized As Safe (GRAS) by FDA and reviewed favourably by JECFA/EFSA; a small subset of sensitive individuals report transient symptoms (headache, flushing) after large intakes.",
+    "consumer_note": "Wheat Flour (Maida): Allowed everywhere; must be declared as a gluten-containing allergen on labels in most jurisdictions. | Edible Vegetable Oil: Allowed everywhere; the choice of palm oil versus other vegetable oils is a manufacturer cost decision, not a regulatory requirement. | Salt: Allowed in India but restricted in some countries' voluntary reformulation programmes due to concerns over exce

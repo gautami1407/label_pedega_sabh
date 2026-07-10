@@ -199,10 +199,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (localStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
         } else {
-            const user = JSON.parse(localStorage.getItem('loggedInUser'));
-            const welcomeEl = document.getElementById('welcomeMessage');
-            if (welcomeEl) {
-                welcomeEl.innerText = `Welcome, ${user.full_name}!`;
+            try {
+                const userRaw = localStorage.getItem('loggedInUser');
+                const user = userRaw ? JSON.parse(userRaw) : null;
+                const welcomeEl = document.getElementById('welcomeMessage');
+                if (welcomeEl && user && user.full_name) {
+                    welcomeEl.innerText = `Welcome, ${user.full_name}!`;
+                }
+            } catch (e) {
+                console.warn('[auth] dashboard user parse error:', e);
             }
         }
     }
@@ -211,10 +216,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logout function
     // --------------------------
     window.logout = function() {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-        localStorage.removeItem('userId');
-        window.location.href = 'login.html';
+        if (confirm('Are you sure you want to logout?')) {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
     };
 
     // --------------------------
@@ -226,16 +231,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Dashboard protection & display user info
+// Dashboard protection & display user info (runs on every page load)
 if (window.location.pathname.includes('dashboard.html')) {
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.href = 'login.html';
     } else {
-        const user = JSON.parse(localStorage.getItem('loggedInUser'));
-        const nameEl = document.getElementById('userName');
-        const emailEl = document.getElementById('userEmail');
+        try {
+            const userRaw = localStorage.getItem('loggedInUser');
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            const nameEl = document.getElementById('userName');
+            const emailEl = document.getElementById('userEmail');
 
-        if (nameEl) nameEl.innerText = user.full_name;
-        if (emailEl) emailEl.innerText = user.email;
+            if (nameEl) nameEl.innerText = (user && user.full_name) ? user.full_name : (localStorage.getItem('userName') || 'User');
+            if (emailEl) emailEl.innerText = (user && user.email) ? user.email : (localStorage.getItem('userEmail') || '');
+        } catch (e) {
+            console.warn('[auth.js] Could not parse loggedInUser:', e);
+        }
     }
 }
