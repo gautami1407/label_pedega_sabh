@@ -938,6 +938,58 @@ h6 {
 }
 
 /* Responsive Design */
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button,
+.btn,
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    min-height: 44px;
+}
+
+.navbar-toggler {
+    border: 0;
+    padding: 0.5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-collapse {
+    padding: 1rem 0;
+}
+
+.navbar-nav .nav-item {
+    width: 100%;
+}
+
+.navbar-nav .nav-link,
+.navbar-nav .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+}
+
 @media (max-width: 991px) {
     .hero-section {
         padding-top: 100px;
@@ -958,6 +1010,15 @@ h6 {
     .section-padding {
         padding: 60px 0;
     }
+
+    .hero-content {
+        text-align: center;
+    }
+
+    .hero-description {
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 @media (max-width: 767px) {
@@ -968,6 +1029,7 @@ h6 {
 
     .hero-cta-group .btn {
         width: 100%;
+        margin-left: 0 !important;
     }
 
     .process-visual {
@@ -977,5 +1039,97 @@ h6 {
     .footer-bottom {
         flex-direction: column;
         text-align: center;
+    }
+
+    .brand-text {
+        font-size: 1.1rem;
+    }
+
+    .navbar-collapse {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 16px;
+        margin-top: 0.75rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .navbar-nav {
+        gap: 0.35rem;
+    }
+
+    .navbar-nav .nav-item {
+        width: 100%;
+    }
+
+    .navbar-nav .nav-link {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
+@media (max-width: 575px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .hero-section {
+        min-height: auto;
+        padding-top: 92px;
+        padding-bottom: 3rem;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 2.7rem);
+    }
+
+    .hero-tagline {
+        font-size: clamp(1.05rem, 4vw, 1.3rem);
+    }
+
+    .hero-description {
+        font-size: 1rem;
+    }
+
+    .hero-card-stack {
+        display: none;
+    }
+
+    .section-title {
+        font-size: clamp(1.6rem, 7vw, 2.2rem);
+    }
+
+    .section-subtitle {
+        font-size: 1rem;
+    }
+
+    .factor-card,
+    .impact-card,
+    .process-step,
+    .regulatory-notice {
+        padding: 1.25rem;
+    }
+
+    .process-step {
+        gap: 0.9rem;
+        flex-direction: column;
+    }
+
+    .step-number {
+        width: 46px;
+        height: 46px;
+        font-size: 1.1rem;
+    }
+
+    .notice-content {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .footer {
+        padding: 3rem 0 1.5rem;
+    }
+
+    .footer-bottom {
+        gap: 0.75rem;
     }
 }

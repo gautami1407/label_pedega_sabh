@@ -32,7 +32,7 @@
     padding: 40px;
     box-shadow: var(--shadow-xl);
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
     gap: 40px;
     align-items: center;
     position: relative;
@@ -57,6 +57,7 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow-md);
+    min-height: 220px;
 }
 
 .product-image-large img {
@@ -162,6 +163,98 @@
     gap: 24px;
 }
 
+@media (max-width: 991px) {
+    .product-header-card {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .product-image-large {
+        height: 260px;
+    }
+
+    .concern-score-display {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 767px) {
+    .product-header-card {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .product-title {
+        font-size: 1.6rem;
+    }
+
+    .product-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .scores-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .concern-score-block,
+    .factor-header,
+    .factor-body,
+    .ai-cta-section,
+    .decision-banner {
+        padding: 20px;
+    }
+
+    .factor-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .additive-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .ai-cta-section {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-image-large {
+        height: 220px;
+    }
+
+    .product-header-card {
+        padding: 16px;
+    }
+
+    .factor-body,
+    .factor-header {
+        padding: 16px;
+    }
+
+    .additive-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ingredient-card {
+        padding: 12px 14px;
+    }
+
+    .risk-badge {
+        float: none;
+        display: inline-flex;
+        margin-top: 8px;
+    }
+
+    .concern-score-block {
+        gap: 16px;
+    }
+}
 .factor-detail-card {
     background: var(--white);
     border-radius: 20px;
