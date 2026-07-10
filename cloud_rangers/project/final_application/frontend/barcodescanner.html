@@ -143,6 +143,11 @@
             <i class="bi bi-broadcast"></i> Initializing camera...
         </div>
 
+        <div id="result" style="color:#e6faff; background: rgba(0,0,0,0.25); padding:12px; border-radius:10px; display:none;">
+            <strong>Product:</strong> <span id="result-name">—</span>
+            <div id="result-body" style="margin-top:8px;font-size:13px;color:#cbd5e1"></div>
+        </div>
+
         <div class="manual-search-box">
             <input type="text" id="manual-barcode" placeholder="Enter barcode manually...">
             <button onclick="manualSearch()">Search</button>
@@ -182,9 +187,28 @@
         function handleScan(barcode) {
             statusElement.innerHTML = "<i class='bi bi-check-circle'></i> Scanned: " + barcode;
             localStorage.setItem("scannedBarcode", barcode);
-            // In a real app, this would redirect to a product details page
-            // For now, let's just go back to the dashboard and highlight the result
-            window.location.href = "dashboard.html?barcode=" + barcode;
+            // Stop scanner
+            try { codeReader.reset(); } catch (e) {}
+
+            // Fetch product data from backend
+            fetch(`/api/product/${barcode}`)
+                .then(async (r) => {
+                    if (!r.ok) throw new Error('Product lookup failed: ' + r.status);
+                    const data = await r.json();
+                    document.getElementById('result-name').textContent = data.name || barcode;
+                    const body = [];
+                    if (data.brand) body.push(`<strong>Brand:</strong> ${data.brand}`);
+                    if (data.category) body.push(`<strong>Category:</strong> ${data.category}`);
+                    if (data.scores && data.scores.nova) body.push(`<strong>Processing:</strong> ${data.scores.nova_label || data.scores.nova}`);
+                    if (data.dashboard_insights && data.dashboard_insights.concern_score !== undefined) body.push(`<strong>Score:</strong> ${data.dashboard_insights.concern_score}`);
+                    document.getElementById('result-body').innerHTML = body.join(' · ');
+                    document.getElementById('result').style.display = 'block';
+                })
+                .catch((err) => {
+                    document.getElementById('result-name').textContent = barcode;
+                    document.getElementById('result-body').textContent = err.message || String(err);
+                    document.getElementById('result').style.display = 'block';
+                });
         }
 
         function manualSearch() {

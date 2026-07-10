@@ -201,6 +201,8 @@ class ProductCatalogRepository:
             payload["barcode"] = norm
             payload["source"] = source
             return payload
+        # Normalize barcode for storage and validation
+        norm = _normalize_barcode(barcode)
 
         if not norm:
             raise ValueError("Invalid barcode")
@@ -229,14 +231,21 @@ class ProductCatalogRepository:
         if existing and isinstance(existing.get("version"), int):
             stored["version"] = int(existing["version"]) + 1
 
-        update = {
-            "$set": stored,
-            "$setOnInsert": {
-                "created_at": stored["created_at"],
-            },
-        }
+        # Preserve existing created_at if present; otherwise use stored value
+        created_at_val = stored.pop("created_at", None)
+        if existing and existing.get("version") is not None:
+            # preserve existing created_at timestamp from DB when updating
+            existing_doc = self.products.find_one({"barcode": norm}, projection={"created_at": 1})
+            if existing_doc and existing_doc.get("created_at"):
+                stored["created_at"] = existing_doc.get("created_at")
+            elif created_at_val is not None:
+                stored["created_at"] = created_at_val
+        else:
+            if created_at_val is not None:
+                stored["created_at"] = created_at_val
 
-        self.products.update_one({"barcode": norm}, update, upsert=True)
+        # Use replace_one to avoid $setOnInsert vs $set conflicts
+        self.products.replace_one({"barcode": norm}, stored, upsert=True)
 
         doc = self.products.find_one({"barcode": norm})
         return doc or stored
