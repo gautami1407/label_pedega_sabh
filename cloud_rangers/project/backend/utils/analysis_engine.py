@@ -382,9 +382,10 @@ def generate_ai_summary(product, nutrition, concern_score, allergens, personaliz
         from config import get_api_key
         api_key = get_api_key("gemini")
         if api_key and "your_gemini" not in api_key and "placeholder" not in api_key.lower():
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("models/gemini-1.5-flash")
+            from google import genai
+            from google.genai import types
+            client = genai.Client(api_key=api_key)
+
             allergen_list = ", ".join(a["allergen"] for a in allergens) or "none"
             factors_list  = " | ".join(concern_score.get("factors", [])) or "none"
             prompt = (
@@ -397,8 +398,11 @@ def generate_ai_summary(product, nutrition, concern_score, allergens, personaliz
                 f"Sugar: {nutrition.get('sugars_100g','N/A')}g | Salt: {nutrition.get('salt_100g','N/A')}g | "
                 f"Sat Fat: {nutrition.get('saturated-fat_100g','N/A')}g | Fiber: {nutrition.get('fiber_100g','N/A')}g per 100g"
             )
-            resp = model.generate_content(prompt)
-            return resp.text.strip()
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt,
+            )
+            return response.text.strip()
     except Exception as e:
         logger.warning(f"[AI] Gemini failed: {e}")
 

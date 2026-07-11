@@ -258,16 +258,23 @@ def news_endpoint(product_name: str, max_articles: int = 10):
 def chat_endpoint(request: ChatRequest):
     from config import get_api_key
     api_key = get_api_key("gemini")
-    is_placeholder = not api_key or "your_gemini_api_key_here" in api_key
+    is_placeholder = not api_key or "your_gemini_api_key_here" in api_key or len(api_key) < 20
 
     if not gemini or is_placeholder:
-        return {"response": f"AI Chat Mock: '{request.message}' received. (Configure GEMINI_API_KEY to enable)"}
+        # Return a specific error code so frontend knows AI is not available
+        raise HTTPException(status_code=503, detail="AI service not configured")
     try:
         if request.context:
             gemini.start_chat(request.context)
-        return {"response": gemini.send_message(request.message)}
+        response = gemini.send_message(request.message)
+        if not response or response.startswith("AI "):
+            # Gemini returned an error message
+            raise HTTPException(status_code=500, detail=response)
+        return {"response": response}
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"response": f"AI error: {str(e)}"}
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
 @app.api_route("/api/product/{barcode}", methods=["GET", "POST"])
 def get_product(barcode: str):

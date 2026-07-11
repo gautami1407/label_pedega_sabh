@@ -10,13 +10,15 @@ print(f"Gemini key loaded: {'YES - ' + key[:12] + '...' if key and 'your_gemini'
 
 # 2. Test Gemini directly
 print()
-print("--- Testing Gemini API directly ---")
+print("--- Testing Gemini API directly (google-genai SDK) ---")
 try:
-    import google.generativeai as genai
-    genai.configure(api_key=key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    resp = model.generate_content("Say hello in one sentence.")
-    print(f"Gemini response: {resp.text.strip()}")
+    from google import genai
+    client = genai.Client(api_key=key)
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents="Say hello in one sentence.",
+    )
+    print(f"Gemini response: {response.text.strip()}")
 except Exception as e:
     print(f"Gemini error: {e}")
 
