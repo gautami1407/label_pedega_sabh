@@ -23,7 +23,7 @@ class GeminiHandler:
     def _generate(self, prompt: str) -> str:
         client = self._get_client()
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt,
         )
         return response.text.strip()
@@ -92,7 +92,7 @@ Return ONLY valid JSON with these fields:
 }"""
         try:
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=[
                     types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
                     prompt

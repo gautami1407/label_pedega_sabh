@@ -1,61 +1,139 @@
-# Environment and secrets
+# ==========================
+# Environment & Secrets
+# ==========================
 .env
 .env.*
 !.env.example
+
 secrets.toml
 *.secrets.toml
 !secrets.toml.example
 
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+credentials.json
+service-account.json
+firebase-adminsdk*.json
+
+# API Keys
+gemini_key.txt
+google_api_key.txt
+usda_api_key.txt
+openai_api_key.txt
+
+# ==========================
 # Python
+# ==========================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
 .venv/
 venv/
 env/
+
 *.egg-info/
 .eggs/
-dist/
-build/
+
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
 htmlcov/
 .coverage
 coverage.xml
 
-# IDE
+# ==========================
+# Build
+# ==========================
+build/
+dist/
+
+# ==========================
+# Databases
+# ==========================
+*.db
+*.sqlite
+*.sqlite3
+
+mongodb/
+mongo_dump/
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+
+benchmark_output/
+benchmark_results.json
+
+test-results/
+playwright-report/
+
+# ==========================
+# OCR / Uploads
+# ==========================
+uploads/
+ocr_temp/
+temp/
+tmp/
+
+# ==========================
+# VS Code / IDE
+# ==========================
 .vscode/
 .idea/
+
 *.swp
 *.swo
 *~
 
+# ==========================
 # OS
+# ==========================
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Logs and local cache
-*.log
-logs/
-.product_checker_cache/
-
-# Node (future admin/frontend tooling)
+# ==========================
+# Node
+# ==========================
 node_modules/
 
-# Flutter (future mobile app)
+# ==========================
+# Flutter
+# ==========================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-build/
 
-# Docker local overrides
+# ==========================
+# Docker
+# ==========================
 docker-compose.override.yml
 
-# Temporary and backup files
+# ==========================
+# Local Cache
+# ==========================
+.product_checker_cache/
+.cache/
+
+# ==========================
+# Backup
+# ==========================
 *.bak
 *.tmp
 *.orig
+
+# ==========================
+# Generated Reports
+# ==========================
+reports/
+*.pdf

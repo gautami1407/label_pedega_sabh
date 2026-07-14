@@ -1,21 +1,29 @@
-# news_service.py
+# news_service.py — Enhanced v2
+# Smarter news fetching with brand/product/ingredient awareness
 import feedparser
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import requests
 from datetime import datetime, timedelta
+import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 FALLBACK_IMAGE = "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&q=80"
 
 SAFETY_KEYWORDS = [
     "recall", "recalled", "contamination", "contaminated",
-    "banned", "unsafe", "warning", "alert", "fssai", "fda",
+    "banned", "unsafe", "warning", "alert", "fssai", "fda", "efsa",
     "mislabel", "mislabeling", "health risk", "bacteria",
     "salmonella", "listeria", "food poisoning", "violation",
     "failed test", "quality test", "unhealthy", "dangerous",
     "adulterated", "substandard", "penalty", "fine", "seized",
     "harmful", "cancer", "carcinogen", "toxic", "lead",
-    "pesticide", "heavy metal", "e. coli", "ecoli"
+    "pesticide", "heavy metal", "e. coli", "ecoli", "withdrawn",
+    "prohibited", "restricted", "limit", "regulation", "compliance",
+    "investigation", "outbreak", "sick", "hospital", "death",
+    "allergen", "undeclared", "packaging defect", "foreign matter"
 ]
 
 FOOD_CONTEXT_KEYWORDS = [
@@ -23,31 +31,93 @@ FOOD_CONTEXT_KEYWORDS = [
     "drink", "beverage", "product", "brand", "pack", "fssai",
     "fda", "factory", "consumer", "ingredient", "nutrition",
     "calories", "sugar", "salt", "fat", "health", "diet",
-    "processed", "additive", "preservative", "colour", "flavor"
+    "processed", "additive", "preservative", "colour", "flavor",
+    "label", "packaging", "manufacturer", "company", "market"
 ]
 
-def is_product_specific(entry, product_name):
+EXCLUDE_KEYWORDS = [
+    "jewelry", "real estate", "travel", "sports", "entertainment",
+    "movie", "music", "concert", "hotel", "vacation", "tourism",
+    "stock market", "cricket", "football", "politics", "election",
+    "hide and seek", "hidden", "gemstone", "diamond", "gold price"
+]
+
+# Known brand/manufacturer mappings for better search
+BRAND_ALIASES = {
+    "maggi": ["nestle", "maggi noodles", "maggi masala"],
+    "coca-cola": ["coca cola", "coke", "cocacola"],
+    "pepsi": ["pepsico", "pepsi cola"],
+    "cadbury": ["mondelez", "cadbury india", "cadbury dairy milk"],
+    "oreo": ["mondelez", "nabisco", "oreo biscuit"],
+    "kitkat": ["nestle", "kit kat", "kitkat chocolate"],
+    "pringles": ["kellanova", "kellogg", "pringles chips"],
+    "lays": ["pepsico", "lay's", "frito-lay", "lays chips"],
+    "red bull": ["redbull", "red bull energy"],
+    "kinder": ["ferrero", "kinder joy", "kinder chocolate"],
+    "amul": ["gujarat cooperative", "amul butter", "amul milk"],
+    "britannia": ["britannia industries", "britannia biscuit"],
+    "horlicks": ["gsk", "glaxosmithkline", "horlicks health"],
+    "bournvita": ["mondelez", "cadbury bournvita"],
+    "parle": ["parle products", "parle g", "parle biscuit"],
+    "heinz": ["kraft heinz", "heinz ketchup"],
+    "kellogg": ["kellogg's", "kellanova", "corn flakes"],
+    "knorr": ["unilever", "knorr soup", "knorr seasoning"],
+    "m&m": ["mars", "m&m's", "mars chocolate"],
+    "domino": ["domino's", "domino pizza", "jubilant foodworks"],
+}
+
+def _get_brand_terms(product_name, brand_name=""):
+    """Generate multiple search terms from brand + product name."""
+    terms = set()
+    product_lower = product_name.lower().strip()
+    brand_lower = brand_name.lower().strip()
+    
+    # Add brand aliases if known
+    for key, aliases in BRAND_ALIASES.items():
+        if key in product_lower or key in brand_lower:
+            for alias in aliases:
+                terms.add(alias)
+    
+    # Add the product name itself
+    terms.add(product_lower)
+    
+    # Add individual words (3+ chars)
+    for word in product_lower.split():
+        if len(word) >= 3 and word not in ['the', 'and', 'for', 'with']:
+            terms.add(word)
+    
+    # Add brand name
+    if brand_lower:
+        terms.add(brand_lower)
+        for word in brand_lower.split():
+            if len(word) >= 3:
+                terms.add(word)
+    
+    return list(terms)
+
+
+def is_relevant_article(entry, product_name, brand_name=""):
+    """Check if article is relevant to the product with better filtering."""
     text = ""
     if hasattr(entry, "title"):
-        text += entry.title.lower()
+        text += entry.title.lower() + " "
     if hasattr(entry, "summary"):
         text += entry.summary.lower()
-
+    
+    # Check for exclusion keywords first
+    if any(excl in text for excl in EXCLUDE_KEYWORDS):
+        return False
+    
     product_name = product_name.lower().strip()
-
-    # Extract meaningful words (3+ chars) from product name
-    name_words = [w for w in product_name.split() if len(w) >= 3]
-    if not name_words:
+    search_terms = _get_brand_terms(product_name, brand_name)
+    
+    # Must mention at least one search term
+    if not any(term in text for term in search_terms):
         return False
-
-    # Must mention at least one word from the product name
-    if not any(word in text for word in name_words):
-        return False
-
-    # Pass if it mentions ANY safety OR food context keyword
-    # This is intentionally broad — we want relevant news, not just recalls
-    all_keywords = SAFETY_KEYWORDS + FOOD_CONTEXT_KEYWORDS
-    return any(keyword in text for keyword in all_keywords)
+    
+    # Must mention either a safety keyword OR food context keyword
+    all_relevant = SAFETY_KEYWORDS + FOOD_CONTEXT_KEYWORDS
+    return any(keyword in text for keyword in all_relevant)
 
 
 def parse_article_date(entry):
@@ -58,11 +128,13 @@ def parse_article_date(entry):
         pass
     return None
 
-def is_recent(entry, days=30):
+
+def is_recent(entry, days=365):
     date = parse_article_date(entry)
     if not date:
         return True
     return date >= datetime.now() - timedelta(days=days)
+
 
 def extract_thumbnail(entry):
     try:
@@ -85,29 +157,11 @@ def extract_thumbnail(entry):
         pass
     return None
 
-def extract_image_from_article(url):
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, headers=headers, timeout=5)
-        soup = BeautifulSoup(r.text, "html.parser")
-        og = soup.find("meta", property="og:image")
-        if og and og.get("content"):
-            return og["content"]
-        twitter = soup.find("meta", attrs={"name": "twitter:image"})
-        if twitter and twitter.get("content"):
-            return twitter["content"]
-    except:
-        pass
-    return None
 
 def resolve_image(entry, link):
     img = extract_thumbnail(entry)
     if img and img.startswith("http"):
         return img
-    # Skip scraping the article webpage to prevent slow performance and timeouts
-    # img = extract_image_from_article(link)
-    # if img and img.startswith("http"):
-    #     return img
     return FALLBACK_IMAGE
 
 
@@ -123,83 +177,72 @@ def format_date(date):
         return f"{diff.days} days ago"
     if diff.days < 30:
         return f"{diff.days // 7} weeks ago"
+    if diff.days < 365:
+        return f"{diff.days // 30} months ago"
     return date.strftime("%b %d, %Y")
 
-# -----------------------------
-# Main function to fetch news
-# -----------------------------
-def fetch_product_news(product_name, max_articles=10):
+
+def get_safety_news(product_name, brand_name="", max_articles=10):
     """
-    Fetch news articles related to a product's safety from Google News RSS.
-    
-    Args:
-        product_name (str): Name of the product to search for.
-        max_articles (int): Maximum number of articles to return.
-
-    Returns:
-        list[dict]: List of article dictionaries with title, link, source, thumbnail, and date.
+    Fetch intelligent safety news for a product.
+    Uses brand-aware search with multiple query strategies.
     """
-
-    # -----------------------------
-    # Prepare RSS query
-    # -----------------------------
-    query = f'{product_name} recall OR contamination OR banned OR unsafe OR warning OR FSSAI OR FDA OR mislabel OR "health risk"'
-    rss_url = f"https://news.google.com/rss/search?q={quote_plus(query)}&hl=en-IN&gl=IN&ceid=IN:en"
-
-    # -----------------------------
-    # Parse RSS feed
-    # -----------------------------
-    feed = feedparser.parse(rss_url)
-    print(f"RSS entries fetched: {len(feed.entries)}")
-    for entry in feed.entries[:5]:  # show first 5 for quick debug
-        print("Title:", entry.title)
-
-    # -----------------------------
-    # Process entries
-    # -----------------------------
     articles = []
     seen = set()
-
-    for entry in feed.entries:
-        link = entry.link
-        if link in seen:
-            continue
-        if not is_recent(entry, days=180):
-            continue
-        if not is_product_specific(entry, product_name):
-            continue
-
-        # Extract source from title if present
-        parts = entry.title.split(" - ")
-        source = parts[-1] if len(parts) > 1 else "News"
-        title = " - ".join(parts[:-1]) if len(parts) > 1 else entry.title
-
-        article = {
-            "title": title.strip(),
-            "link": link.strip(),
-            "source": source.strip(),
-            "thumbnail": resolve_image(entry, link),
-            "date": parse_article_date(entry)
-        }
-
-        articles.append(article)
-        seen.add(link)
-
+    
+    search_terms = _get_brand_terms(product_name, brand_name)
+    
+    # Try multiple search queries for better coverage
+    queries = [
+        f"{product_name} recall OR contamination OR banned OR unsafe",
+        f"{product_name} food safety OR health warning",
+        f"{product_name} FDA OR FSSAI OR EFSA regulation",
+    ]
+    
+    # Add brand-specific query
+    if brand_name:
+        queries.insert(0, f"{brand_name} {product_name} recall OR safety")
+    
+    for query in queries:
         if len(articles) >= max_articles:
             break
-
+            
+        rss_url = (
+            f"https://news.google.com/rss/search?q={quote_plus(query)}"
+            f"&hl=en-IN&gl=IN&ceid=IN:en"
+        )
+        
+        try:
+            feed = feedparser.parse(rss_url)
+        except Exception as e:
+            logger.warning(f"RSS parse error for '{query[:30]}': {e}")
+            continue
+        
+        for entry in feed.entries:
+            if len(articles) >= max_articles:
+                break
+                
+            link = entry.link
+            if link in seen:
+                continue
+            if not is_recent(entry):
+                continue
+            if not is_relevant_article(entry, product_name, brand_name):
+                continue
+            
+            seen.add(link)
+            
+            # Extract source from title
+            parts = entry.title.split(" - ")
+            source = parts[-1] if len(parts) > 1 else "News"
+            title = " - ".join(parts[:-1]) if len(parts) > 1 else entry.title
+            
+            articles.append({
+                "title": title.strip(),
+                "link": link.strip(),
+                "source": source.strip(),
+                "thumbnail": resolve_image(entry, link),
+                "date": format_date(parse_article_date(entry))
+            })
+    
     return articles
-
-
-def get_safety_news(product_name, max_articles=10):
-    articles = fetch_product_news(product_name, max_articles)
-    formatted = []
-    for a in articles:
-        formatted.append({
-            "title": a.get("title"),
-            "link": a.get("link"),
-            "source": a.get("source"),
-            "thumbnail": a.get("thumbnail") or FALLBACK_IMAGE,
-            "date": format_date(a.get("date"))
-        })
-    return formatted

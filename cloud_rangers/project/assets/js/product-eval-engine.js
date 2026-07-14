@@ -1,7 +1,8 @@
 // ============================================================
-// LABEL PADEGHA SABH — Product Evaluation Engine v4.1
+// LABEL PADEGHA SABH — Product Evaluation Engine v4.2
 // FIXED: API_BASE conflict, double res.json(), stepTimer race,
-//        loading state management, comprehensive debug logging
+//        loading state management, merge conflict markers removed,
+//        comprehensive debug logging
 // ============================================================
 
 // ── CRITICAL FIX (Bug #2): Use a unique name to avoid `const` redeclaration
@@ -44,7 +45,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var barcode = barcodeFromUrl || localStorage.getItem('scannedBarcode');
     var image   = localStorage.getItem('scannedImageBase64');
 
-    evalLog('🚀 DOMContentLoaded — barcode="' + barcode + '" image=' + !!image);
+    evalLog('DOMContentLoaded — barcode="' + barcode + '" image=' + !!image);
 
     if (barcode) {
         evalLog('Starting barcode analysis: ' + barcode);
@@ -63,7 +64,7 @@ window.addEventListener('DOMContentLoaded', function() {
 function showError(title, msg) {
     title = title || 'Error';
     msg   = msg   || 'Something went wrong.';
-    evalLog('❌ showError: ' + title + ' — ' + msg, 'error');
+    evalLog('showError: ' + title + ' — ' + msg, 'error');
     document.getElementById('loadingContainer').style.display = 'none';
     document.getElementById('productContainer').style.display = 'none';
     var err = document.getElementById('errorContainer');
@@ -89,8 +90,7 @@ async function fetchFullAnalysis(barcode) {
 
     var stepSeq = ['step-fetch', 'step-extract', 'step-regulatory', 'step-ai', 'step-personalize', 'step-dashboard'];
 
-    // ── CRITICAL FIX (Bug #5): Run step animation concurrently — don't await it
-    // before the fetch. This prevents a 3-second deadlock if the API is fast.
+    // Run step animation concurrently — don't await it before the fetch
     var stepTimer = animateLoadingSteps(stepSeq, 500);
 
     var data = null;
@@ -105,7 +105,7 @@ async function fetchFullAnalysis(barcode) {
             diet:       profile.diet       || ''
         };
 
-        evalLog('📡 Sending POST /api/analyze-product  barcode=' + barcode);
+        evalLog('Sending POST /api/analyze-product  barcode=' + barcode);
         evalLog('   payload: ' + JSON.stringify(payload));
 
         var res = await fetch(EVAL_API_BASE + '/api/analyze-product', {
@@ -114,32 +114,28 @@ async function fetchFullAnalysis(barcode) {
             body:    JSON.stringify(payload)
         });
 
-        evalLog('✅ API response received — HTTP ' + res.status + ' ' + res.statusText);
+        evalLog('API response received — HTTP ' + res.status + ' ' + res.statusText);
 
-        // ── CRITICAL FIX (Bug #3): Read the response body EXACTLY ONCE.
-        // Previously the code called res.json() inside the !res.ok branch AND
-        // again outside it, causing "body stream already consumed" TypeError.
+        // Read the response body EXACTLY ONCE
         data = await res.json();
-        evalLog('✅ Response JSON parsed successfully');
+        evalLog('Response JSON parsed successfully');
         evalLog('   Keys: ' + Object.keys(data).join(', '));
 
         if (!res.ok) {
-            // Backend returned a non-2xx status — extract message from either field
             var errMsg = (data && (data.detail || data.error)) || ('Server error (' + res.status + ')');
-            evalLog('❌ Non-OK status: ' + errMsg, 'error');
+            evalLog('Non-OK status: ' + errMsg, 'error');
             throw new Error(errMsg);
         }
 
         // Backend may return 200 + {"error": "..."} for product-not-found
         if (data.error) {
-            evalLog('❌ Product not found: ' + data.error, 'warn');
+            evalLog('Product not found: ' + data.error, 'warn');
             showError('Product Not Found', data.error);
             return;
         }
 
     } catch (err) {
-        evalLog('❌ Fetch/parse failed: ' + err.message, 'error');
-        // ── CRITICAL FIX (Bug #4): Always hide loading in the error path
+        evalLog('Fetch/parse failed: ' + err.message, 'error');
         loading.style.display = 'none';
         if (err.message && err.message.includes('Failed to fetch')) {
             showError(
@@ -152,14 +148,12 @@ async function fetchFullAnalysis(barcode) {
         return;
     }
 
-    // ── CRITICAL FIX (Bug #4): Hide loading BEFORE rendering so the product
-    // cards are not covered by the spinner overlay.
+    // Hide loading BEFORE rendering
     loading.style.display = 'none';
 
-    evalLog('🎨 Calling renderFullAnalysis...');
+    evalLog('Calling renderFullAnalysis...');
     renderFullAnalysis(data, getHealthProfile());
 
-    // Let the step animation finish in the background (it's already running)
     stepTimer.catch(function() {});
 }
 
@@ -181,7 +175,7 @@ async function fetchProductByImage(base64Image) {
         var prefs     = getHealthProfile();
         var imageData = 'data:image/jpeg;base64,' + base64Image;
 
-        evalLog('📡 Sending POST /api/analyze (image)');
+        evalLog('Sending POST /api/analyze (image)');
 
         var res = await fetch(EVAL_API_BASE + '/api/analyze', {
             method:  'POST',
@@ -189,9 +183,9 @@ async function fetchProductByImage(base64Image) {
             body:    JSON.stringify({ image: imageData, preferences: prefs })
         });
 
-        evalLog('✅ Image API response — HTTP ' + res.status);
-        data = await res.json();   // read once
-        evalLog('✅ Image response JSON parsed');
+        evalLog('Image API response — HTTP ' + res.status);
+        data = await res.json();
+        evalLog('Image response JSON parsed');
 
         if (!res.ok) {
             var errMsg = (data && (data.error || data.detail)) || ('Server error (' + res.status + ')');
@@ -205,7 +199,7 @@ async function fetchProductByImage(base64Image) {
         }
 
     } catch (err) {
-        evalLog('❌ Image fetch failed: ' + err.message, 'error');
+        evalLog('Image fetch failed: ' + err.message, 'error');
         loading.style.display = 'none';
         showError('Image Analysis Failed', err.message || 'Could not analyze the image.');
         return;
@@ -217,7 +211,7 @@ async function fetchProductByImage(base64Image) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// RENDER ENGINE v4.1 — Full dashboard
+// RENDER ENGINE v4.2 — Full dashboard
 // ═══════════════════════════════════════════════════════════
 
 // HTML entity encoding helper
@@ -237,7 +231,7 @@ function escHtml(s) {
 
 function renderFullAnalysis(analysisData, profile) {
     if (!profile) profile = {};
-    evalLog('🎨 renderFullAnalysis — product: ' + (analysisData.product && analysisData.product.name));
+    evalLog('renderFullAnalysis — product: ' + (analysisData.product && analysisData.product.name));
 
     // Save active state globally for filters, sorting, search & exports
     window.activeAnalysisData = analysisData;
@@ -245,7 +239,7 @@ function renderFullAnalysis(analysisData, profile) {
 
     var container = document.getElementById('productContainer');
     if (!container) {
-        evalLog('❌ productContainer element not found!', 'error');
+        evalLog('productContainer element not found!', 'error');
         return;
     }
 
@@ -262,7 +256,7 @@ function renderFullAnalysis(analysisData, profile) {
         var news                   = analysisData.news                   || [];
         var nova                   = analysisData.nova                   || { level: 'Unknown', name: 'Not Classified', description: '' };
 
-        evalLog('📊 Data summary:');
+        evalLog('Data summary:');
         evalLog('   product.name   = ' + product.name);
         evalLog('   ingredients    = ' + ingredients.length);
         evalLog('   allergens      = ' + allergens.length);
@@ -314,9 +308,15 @@ function renderFullAnalysis(analysisData, profile) {
                 }
                 ingExplHtml += '</p>';
                 if (ing.simple_name) ingExplHtml += '<p class="ing-purpose"><strong>Also known as:</strong> ' + escHtml(ing.simple_name) + '</p>';
+                if (ing.ins_e)       ingExplHtml += '<p class="ing-purpose"><strong>Code:</strong> ' + escHtml(ing.ins_e) + '</p>';
                 if (ing.purpose)     ingExplHtml += '<p class="ing-purpose"><strong>Purpose:</strong> ' + escHtml(ing.purpose) + '</p>';
-                if (ing.description) ingExplHtml += '<p class="ing-purpose text-truncate">' + escHtml(ing.description) + '</p>';
-                if (ing.category)    ingExplHtml += '<span class="tag-pill mt-2">' + escHtml(ing.category) + '</span>';
+                if (ing.description) ingExplHtml += '<p class="ing-purpose">' + escHtml(ing.description) + '</p>';
+                if (ing.category)    ingExplHtml += '<span class="tag-pill">' + escHtml(ing.category) + '</span>';
+                // Source badge — highlight additives that were resolved from codes
+                if (ing.source === 'additives' || ing.source === 'both') {
+                    var srcLabel = ing.source === 'both' ? 'Ingredient + Additive' : 'Additive (resolved from code)';
+                    ingExplHtml += '<span class="tag-pill ing-src-additive">' + srcLabel + '</span>';
+                }
                 ingExplHtml += '</div>';
             }
         } else {
@@ -501,7 +501,6 @@ function renderFullAnalysis(analysisData, profile) {
         html += '<div class="factor-body">' + warningsHtml + '</div></div>';
 
         // ── Factor 6: Global Regulatory Status (Interactive bottom-sheet v4.2) ──
-        // Store regulatory HTML in global variable
         window.activeRegulatoryHtml = regHtml;
 
         html += '<div class="factor-detail-card fade-in-up stagger-6" style="cursor:pointer;" onclick="openRegulatoryBottomSheet()">';
@@ -513,7 +512,7 @@ function renderFullAnalysis(analysisData, profile) {
         // ── Safety Alerts & Recalls ──
         html += '<div class="factor-detail-card fade-in-up stagger-7">';
         html += '<div class="factor-header"><div class="factor-icon-lg" style="background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="bi bi-megaphone-fill"></i></div>';
-        html += '<div><h3>Safety Alerts &amp; Recalls</h3><p class="factor-subtitle">Official recall notices and safety news</p></div></div>';
+        html += '<div><h3>Safety Alerts & Recalls</h3><p class="factor-subtitle">Official recall notices and safety news</p></div></div>';
         html += '<div class="factor-body">' + newsHtml + '</div></div>';
 
         // ── AI Summary ──
@@ -522,11 +521,22 @@ function renderFullAnalysis(analysisData, profile) {
         html += '<div><h3>AI Summary</h3><p class="factor-subtitle">Simplified overview based on verified data</p></div></div>';
         html += '<div class="factor-body"><div style="background:var(--gray-100);border-radius:14px;padding:20px;line-height:1.7;">' + escHtml(aiSummary) + '</div></div></div>';
 
+        // ── Dataset Regulatory Report (uploaded spreadsheet — authoritative) ──
+        var datasetReport = analysisData.dataset_regulatory_report || null;
+        var datasetHtml   = buildDatasetRegulatoryCard(datasetReport);
+        html += '<div class="factor-detail-card fade-in-up stagger-7" id="dataset-reg-card" style="border-color:rgba(139,92,246,0.25);">';
+        html += '<div class="factor-header" style="background:rgba(139,92,246,0.05);">';
+        html += '<div class="factor-icon-lg" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);"><i class="bi bi-database-check"></i></div>';
+        html += '<div>';
+        html += '<h3>Dataset Regulatory Report</h3>';
+        html += '<p class="factor-subtitle">Checked exclusively against the uploaded Food Additive & Contaminant Regulation Dataset (3 sheets)</p>';
+        html += '</div></div>';
+        html += '<div class="factor-body">' + datasetHtml + '</div></div>';
+
         // ── Decision Banner ──
         html += '<div class="decision-banner fade-in-up stagger-7">';
         html += '<h4>Your Decision Matters</h4>';
         html += '<p>Label Padegha Sabh provides transparent, data-driven insights — not a verdict. You are empowered to make the best choice for yourself.</p>';
-        html += '</div>';
 
         // ── AI CTA ──
         html += '<div class="ai-cta-section fade-in-up stagger-7">';
@@ -539,7 +549,7 @@ function renderFullAnalysis(analysisData, profile) {
         container.innerHTML = html;
         container.style.display = 'block';
 
-        evalLog('✅ UI updated — all 6 factor cards rendered successfully', 'info');
+        evalLog('UI updated — all factor cards rendered successfully', 'info');
 
         // Save context for AI chat
         try {
@@ -554,7 +564,7 @@ function renderFullAnalysis(analysisData, profile) {
         } catch (e) {}
 
     } catch (err) {
-        evalLog('❌ renderFullAnalysis crashed: ' + err.message, 'error');
+        evalLog('renderFullAnalysis crashed: ' + err.message, 'error');
         console.error('[ProductEval] Render error detail:', err);
         container.innerHTML  = '<div class="error-card"><i class="bi bi-exclamation-circle"></i><h4>Analysis Preview Available</h4>';
         container.innerHTML += '<p class="text-muted">We received product information, but the full dashboard could not be rendered.</p>';
@@ -727,7 +737,7 @@ function showIngredientModal(index) {
         html += '<div class="mb-3"><strong>Purpose / Function:</strong><p class="text-muted mt-1" style="font-size:13px;">' + escHtml(ing.purpose) + '</p></div>';
     }
     if (ing.description) {
-        html += '<div class="mb-3"><strong>Health &amp; Safety Description:</strong><p class="text-muted mt-1" style="line-height:1.6; font-size:13px;">' + escHtml(ing.description) + '</p></div>';
+        html += '<div class="mb-3"><strong>Health & Safety Description:</strong><p class="text-muted mt-1" style="line-height:1.6; font-size:13px;">' + escHtml(ing.description) + '</p></div>';
     }
     
     if (additive) {
@@ -900,13 +910,13 @@ function renderAdditiveReport() {
         html += '</table></div></div>';
 
         html += '<div class="p-3 bg-light rounded-4 mb-4 border">';
-        html += '<h6 style="font-weight:700;"><i class="bi bi-journal-text me-1 text-primary"></i>Scientific Notes &amp; Observations</h6>';
+        html += '<h6 style="font-weight:700;"><i class="bi bi-journal-text me-1 text-primary"></i>Scientific Notes & Observations</h6>';
         html += '<p class="text-muted mb-0 small" style="line-height:1.6;">' + escHtml(add.scientific_notes) + '</p>';
         html += '<h6 class="mt-3" style="font-weight:700;"><i class="bi bi-heart-pulse-fill me-1 text-danger"></i>Health Considerations</h6>';
         html += '<p class="text-muted mb-0 small" style="line-height:1.6;">' + escHtml(add.health_considerations) + '</p>';
         html += '</div>';
 
-        html += '<h6 class="mb-3" style="font-weight:700;"><i class="bi bi-globe2 me-1 text-success"></i>Country-wise Approval &amp; Limits</h6>';
+        html += '<h6 class="mb-3" style="font-weight:700;"><i class="bi bi-globe2 me-1 text-success"></i>Country-wise Approval & Limits</h6>';
         html += '<div class="table-responsive-container mb-2">';
         html += '<table class="table table-hover align-middle mb-0" style="font-size:13px;">';
         html += '<thead class="table-light"><tr>';
@@ -1109,7 +1119,7 @@ function exportAdditiveReport(type) {
             html += '<h2>' + a.name + ' (' + a.ins_no + ') - <span class="risk-badge risk-' + a.risk_level.split(' ')[0] + '">' + a.risk_level + '</span></h2>';
             html += '<p><strong>Functional Class:</strong> ' + a.category + ' | <strong>Purpose:</strong> ' + a.purpose + '</p>';
             html += '<p><strong>Scientific Notes:</strong> ' + a.scientific_notes + '</p>';
-            html += '<p><strong>Health &amp; Safety Considerations:</strong> ' + a.health_considerations + '</p>';
+            html += '<p><strong>Health & Safety Considerations:</strong> ' + a.health_considerations + '</p>';
             
             html += '<table class="table table-bordered table-sm mt-2">';
             html += '<thead class="table-light"><tr><th>Country</th><th>Regulatory Authority</th><th>Status</th><th>Max Limit</th></tr></thead><tbody>';
@@ -1124,4 +1134,256 @@ function exportAdditiveReport(type) {
         printWin.document.write(html);
         printWin.document.close();
     }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATASET REGULATORY REPORT — Builder functions
+// Renders the full ingredient-by-ingredient table + summary
+// sourced exclusively from the uploaded spreadsheet.
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * buildDatasetRegulatoryCard(report)
+ * report = { rows: [...], summary: {...} }  or null
+ */
+function buildDatasetRegulatoryCard(report) {
+    if (!report) {
+        return '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>' +
+               'Dataset regulatory check is not available for this product.</div>';
+    }
+
+    var rows    = report.rows    || [];
+    var summary = report.summary || {};
+
+    if (rows.length === 0) {
+        return '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>' +
+               'No ingredients were extracted to check against the dataset.</div>';
+    }
+
+    var html = '';
+
+    // ── Summary bar ─────────────────────────────────────────
+    html += buildDatasetSummaryBar(summary);
+
+    // ── Jurisdiction issue list ──────────────────────────────
+    var jurs = summary.jurisdictions_with_issues || [];
+    if (jurs.length > 0) {
+        html += '<div class="ds-jurisdiction-strip">';
+        html += '<span class="ds-strip-label"><i class="bi bi-flag-fill me-1"></i>Regulatory issues found in:</span> ';
+        for (var j = 0; j < jurs.length; j++) {
+            html += '<span class="ds-jur-pill">' + escHtml(jurs[j]) + '</span>';
+        }
+        html += '</div>';
+    }
+
+    // ── Recall brand notice ──────────────────────────────────
+    var brands = summary.recall_brands || [];
+    if (brands.length > 0) {
+        html += '<div class="ds-recall-notice">';
+        html += '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
+        html += '<strong>Recall history brand(s) referenced in dataset:</strong> ' + escHtml(brands.join(', '));
+        html += '</div>';
+    }
+
+    // ── Per-ingredient table ─────────────────────────────────
+    html += '<div class="ds-table-wrap">';
+    html += '<table class="ds-table">';
+    html += '<thead><tr>';
+    html += '<th>Ingredient</th>';
+    html += '<th>Status</th>';
+    html += '<th>Country / Region</th>';
+    html += '<th>Restriction Details</th>';
+    html += '<th>Source / Reference</th>';
+    html += '</tr></thead>';
+    html += '<tbody>';
+
+    for (var i = 0; i < rows.length; i++) {
+        html += buildDatasetIngredientRows(rows[i]);
+    }
+
+    html += '</tbody></table></div>';
+
+    return html;
+}
+
+/**
+ * buildDatasetSummaryBar(summary)
+ * Renders the coloured stat-pill bar at the top.
+ */
+function buildDatasetSummaryBar(summary) {
+    var total      = summary.total      || 0;
+    var banned     = summary.banned     || 0;
+    var restricted = summary.restricted || 0;
+    var allowed    = summary.allowed    || 0;
+
+    var html = '<div class="ds-summary-bar">';
+
+    html += '<div class="ds-stat-pill ds-stat-total">';
+    html += '<span class="ds-stat-num">' + total + '</span>';
+    html += '<span class="ds-stat-lbl">Scanned</span>';
+    html += '</div>';
+
+    html += '<div class="ds-stat-pill ds-stat-banned">';
+    html += '<span class="ds-stat-num">' + banned + '</span>';
+    html += '<span class="ds-stat-lbl">Banned</span>';
+    html += '</div>';
+
+    html += '<div class="ds-stat-pill ds-stat-restricted">';
+    html += '<span class="ds-stat-num">' + restricted + '</span>';
+    html += '<span class="ds-stat-lbl">Restricted</span>';
+    html += '</div>';
+
+    html += '<div class="ds-stat-pill ds-stat-allowed">';
+    html += '<span class="ds-stat-num">' + allowed + '</span>';
+    html += '<span class="ds-stat-lbl">Allowed</span>';
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+}
+
+/**
+ * buildDatasetIngredientRows(row)
+ * One ingredient may produce multiple <tr> rows (one per jurisdiction hit).
+ * If no hits → single "No Match" row.
+ */
+function buildDatasetIngredientRows(row) {
+    var ingredient  = escHtml(row.ingredient   || '');
+    var status      = row.status               || [];
+    var matchedAs   = row.matched_as           || '';
+    var addHits     = row.additive_hits        || [];
+    var euHits      = row.eu_hits              || [];
+    var recallHits  = row.recall_hits          || [];
+
+    var statusClass = 'ds-status-nomatch';
+    var statusIcon  = 'bi-dash-circle';
+    if (status === 'Banned')     { statusClass = 'ds-status-banned';     statusIcon = 'bi-x-circle-fill'; }
+    if (status === 'Restricted') { statusClass = 'ds-status-restricted'; statusIcon = 'bi-exclamation-circle-fill'; }
+    if (status === 'Allowed')    { statusClass = 'ds-status-allowed';    statusIcon = 'bi-check-circle-fill'; }
+
+    var ingDisplay = ingredient;
+    if (matchedAs) {
+        ingDisplay += ' <span class="ds-alias">(matched: ' + escHtml(matchedAs) + ')</span>';
+    }
+
+    // No hits at all
+    if (addHits.length === 0 && euHits.length === 0 && recallHits.length === 0) {
+        return '<tr class="ds-row-nomatch">' +
+               '<td class="ds-ing-cell">' + ingDisplay + '</td>' +
+               '<td><span class="ds-status-badge ' + statusClass + '">' +
+               '<i class="bi ' + statusIcon + ' me-1"></i>No Match</span></td>' +
+               '<td>—</td><td>No matching regulatory information found in the uploaded dataset.</td><td>—</td>' +
+               '</tr>';
+    }
+
+    var html = '';
+    var rowCount = 0;
+
+    // ── Additive_Limits rows ──────────────────────────────────
+    for (var a = 0; a < addHits.length; a++) {
+        var h = addHits[a];
+        var scl = _dsStatusClass(h.status_class);
+        var sci = _dsStatusIcon(h.status_class);
+
+        var detailParts = [];
+        if (h.status_limit)     detailParts.push(escHtml(h.status_limit));
+        if (h.food_category)    detailParts.push('<em>' + escHtml(h.food_category) + '</em>');
+        if (h.function)         detailParts.push('Function: ' + escHtml(h.function));
+        if (h.difference_notes) detailParts.push('<span class="ds-note">' + escHtml(h.difference_notes) + '</span>');
+        var detail = detailParts.join(' &bull; ') || '—';
+
+        var sourceText = '';
+        if (h.ins_e_no && h.ins_e_no !== '—') sourceText += escHtml(h.ins_e_no) + ' — ';
+        if (h.table_group) sourceText += escHtml(h.table_group);
+        if (h.source)      sourceText += (sourceText ? '<br><small>' : '') + escHtml(h.source) + (sourceText ? '</small>' : '');
+
+        html += '<tr class="ds-row' + (rowCount === 0 ? ' ds-row-first' : '') + '">';
+        if (rowCount === 0) {
+            var totalRowSpan = addHits.length + euHits.length + (recallHits.length > 0 ? recallHits.length : 0);
+            html += '<td class="ds-ing-cell" rowspan="' + totalRowSpan + '">' + ingDisplay + '</td>';
+            html += '<td class="ds-status-cell" rowspan="' + totalRowSpan + '">' +
+                    '<span class="ds-status-badge ' + statusClass + '">' +
+                    '<i class="bi ' + statusIcon + ' me-1"></i>' + escHtml(status) + '</span></td>';
+        }
+        html += '<td>' + escHtml(h.jurisdiction || '—') + '</td>';
+        html += '<td>' + detail + '</td>';
+        html += '<td class="ds-source-cell">' + (sourceText || '—') + '</td>';
+        html += '</tr>';
+        rowCount++;
+    }
+
+    // ── EU_Not_Authorised rows ─────────────────────────────────
+    for (var e = 0; e < euHits.length; e++) {
+        var eh = euHits[e];
+
+        var euDetailParts = [];
+        if (eh.status_limit) euDetailParts.push(escHtml(eh.status_limit));
+        if (eh.reason)       euDetailParts.push('<span class="ds-note">' + escHtml(eh.reason) + '</span>');
+        if (eh.found_in)     euDetailParts.push('Found in: ' + escHtml(eh.found_in));
+        var euDetail = euDetailParts.join(' &bull; ') || '—';
+
+        var euSource = '';
+        if (eh.e_number && eh.e_number !== '—') euSource += 'E-No: ' + escHtml(eh.e_number) + ' — ';
+        if (eh.function) euSource += 'Function: ' + escHtml(eh.function);
+        euSource += '<br><small>EU_Not_Authorised_Additives sheet</small>';
+
+        html += '<tr class="ds-row ds-row-eu' + (rowCount === 0 ? ' ds-row-first' : '') + '">';
+        if (rowCount === 0) {
+            html += '<td class="ds-ing-cell">' + ingDisplay + '</td>';
+            html += '<td class="ds-status-cell">' +
+                    '<span class="ds-status-badge ' + statusClass + '">' +
+                    '<i class="bi ' + statusIcon + ' me-1"></i>' + escHtml(status) + '</span></td>';
+        }
+        html += '<td>' + escHtml(eh.jurisdiction || 'EU') + '</td>';
+        html += '<td>' + euDetail + '</td>';
+        html += '<td class="ds-source-cell">' + euSource + '</td>';
+        html += '</tr>';
+        rowCount++;
+    }
+
+    // ── Recall_Incidents rows ──────────────────────────────────
+    for (var r = 0; r < recallHits.length; r++) {
+        var rh = recallHits[r];
+
+        var recDetailParts = [];
+        if (rh.brand && rh.brand !== 'Unspecified')   recDetailParts.push('<strong>' + escHtml(rh.brand) + '</strong> — ' + escHtml(rh.product));
+        if (rh.hazard)          recDetailParts.push(escHtml(rh.hazard));
+        if (rh.health_concern && rh.health_concern !== '—')  recDetailParts.push(escHtml(rh.health_concern));
+        if (rh.action && rh.action !== '—')           recDetailParts.push('<span class="ds-note">' + escHtml(rh.action) + '</span>');
+        if (rh.current_status && rh.current_status !== '—') recDetailParts.push(escHtml(rh.current_status));
+        var recDetail = recDetailParts.join(' &bull; ') || '—';
+
+        var recSource = '';
+        if (rh.threshold && rh.threshold !== '—') recSource += escHtml(rh.threshold);
+        recSource += '<br><small>Recall_Incidents sheet — ' + escHtml(rh.agency || '—') + '</small>';
+
+        html += '<tr class="ds-row ds-row-recall' + (rowCount === 0 ? ' ds-row-first' : '') + '">';
+        if (rowCount === 0) {
+            html += '<td class="ds-ing-cell">' + ingDisplay + '</td>';
+            html += '<td class="ds-status-cell">' +
+                    '<span class="ds-status-badge ' + statusClass + '">' +
+                    '<i class="bi ' + statusIcon + ' me-1"></i>' + escHtml(status) + '</span></td>';
+        }
+        html += '<td>' + escHtml(rh.agency || '—') + '</td>';
+        html += '<td>' + recDetail + '</td>';
+        html += '<td class="ds-source-cell">' + recSource + '</td>';
+        html += '</tr>';
+        rowCount++;
+    }
+
+    return html;
+}
+
+// Internal helpers for status class/icon strings
+function _dsStatusClass(s) {
+    if (s === 'Banned')     return 'ds-status-banned';
+    if (s === 'Restricted') return 'ds-status-restricted';
+    if (s === 'Allowed')    return 'ds-status-allowed';
+    return 'ds-status-nomatch';
+}
+function _dsStatusIcon(s) {
+    if (s === 'Banned')     return 'bi-x-circle-fill';
+    if (s === 'Restricted') return 'bi-exclamation-circle-fill';
+    if (s === 'Allowed')    return 'bi-check-circle-fill';
+    return 'bi-dash-circle';
 }

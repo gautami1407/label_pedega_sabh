@@ -23,8 +23,14 @@ from typing import List, Dict, Optional, Any
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.product_lookup import lookup_product
-from utils.data_processor import normalize_product_data, parse_ingredients
+from utils.data_processor import (
+    normalize_product_data,
+    parse_ingredients,
+    merge_ingredients_and_additives,
+    get_merged_ingredient_names,
+)
 from utils.risk_engine import load_banned_ingredients, check_banned_ingredients, calculate_health_score
+from utils.dataset_regulatory_checker import check_ingredients_against_dataset
 from news_service import get_safety_news
 
 logger = logging.getLogger(__name__)
@@ -128,7 +134,18 @@ def fetch_product_data(barcode):
     return None
 
 # ── Step 4: Ingredient explanations ──────────────────────
-def lookup_ingredient_explanations(ingredients):
+def lookup_ingredient_explanations(ingredients, metadata=None):
+    """
+    Build per-ingredient explanation cards.
+    `metadata` is the list of records from merge_ingredients_and_additives()
+    — used to annotate source ("additives", "both") and INS/E numbers.
+    """
+    # Build a quick lookup from ingredient_name → metadata record
+    meta_map = {}
+    if metadata:
+        for rec in metadata:
+            meta_map[rec["ingredient_name"].strip().lower()] = rec
+
     results = []
     for ing in ingredients:
         il = ing.strip().lower()
@@ -138,13 +155,35 @@ def lookup_ingredient_explanations(ingredients):
                 if key in il or il in key:
                     entry = val
                     break
+
+        meta_rec = meta_map.get(il, {})
+        ins_e_label = ""
+        if meta_rec.get("ins_number") or meta_rec.get("e_number"):
+            parts = []
+            if meta_rec.get("ins_number"): parts.append(meta_rec["ins_number"])
+            if meta_rec.get("e_number"):   parts.append(meta_rec["e_number"])
+            ins_e_label = "/".join(parts)
+
         if entry:
-            results.append({"name": ing, "simple_name": entry["simple_name"],
-                             "purpose": entry["purpose"], "description": entry["health_notes"],
-                             "category": entry["category"]})
+            results.append({
+                "name":        ing,
+                "simple_name": entry["simple_name"],
+                "purpose":     entry["purpose"],
+                "description": entry["health_notes"],
+                "category":    entry["category"],
+                "source":      meta_rec.get("source", "ingredients"),
+                "ins_e":       ins_e_label,
+            })
         else:
-            results.append({"name": ing, "simple_name": "", "purpose": "Ingredient listed on label.",
-                             "description": "No detailed information available.", "category": "Unknown"})
+            results.append({
+                "name":        ing,
+                "simple_name": "",
+                "purpose":     "Ingredient listed on label.",
+                "description": "No detailed information available.",
+                "category":    "Unknown",
+                "source":      meta_rec.get("source", "ingredients"),
+                "ins_e":       ins_e_label,
+            })
     return results
 
 # ── Step 5: Concern score ─────────────────────────────────
@@ -399,7 +438,7 @@ def generate_ai_summary(product, nutrition, concern_score, allergens, personaliz
                 f"Sat Fat: {nutrition.get('saturated-fat_100g','N/A')}g | Fiber: {nutrition.get('fiber_100g','N/A')}g per 100g"
             )
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=prompt,
             )
             return response.text.strip()
@@ -435,9 +474,11 @@ def analyze_product(barcode, user_profile=None):
 
     result = {
         "barcode": barcode, "product": None, "nutrition": {}, "ingredients": [],
-        "ingredient_explanations": [], "concern_score": None, "allergens": [], "alerts": [],
+        "ingredient_explanations": [], "ingredient_metadata": [],
+        "concern_score": None, "allergens": [], "alerts": [],
         "personalized_warnings": [], "regulatory": [], "recalls": [], "news": [],
-        "nova": None, "ai_summary": "", "health_score": None, "error": None
+        "nova": None, "ai_summary": "", "health_score": None, "error": None,
+        "dataset_regulatory_report": None
     }
 
     product = fetch_product_data(barcode)
@@ -463,15 +504,31 @@ def analyze_product(barcode, user_profile=None):
     nutrition  = product.get("nutriments", {})
     result["nutrition"] = nutrition
 
-    ingredients_text = product.get("ingredients_text", "")
-    ingredients = parse_ingredients(ingredients_text)
-    result["ingredients"] = ingredients
-    logger.info(f"[Pipeline] {len(ingredients)} ingredients parsed")
+    # ── Build the UNIFIED ingredient list ─────────────────────────
+    # merge_ingredients_and_additives() consumes ALL OFF fields:
+    #   ingredients_text, ingredients_tags, additives_tags,
+    #   additives_original, ingredient_analysis.
+    # E/INS codes are resolved to canonical names before merging.
+    # The result is deduplicated; source="both" when an item appears
+    # in multiple fields.
+    merged_records = merge_ingredients_and_additives(product)
+    ingredients    = [r["ingredient_name"] for r in merged_records]
+
+    # Also expose the full metadata records for downstream use
+    result["ingredients"]         = ingredients
+    result["ingredient_metadata"] = merged_records
+
+    logger.info(
+        f"[Pipeline] {len(ingredients)} ingredients after merge "
+        f"(text={len(parse_ingredients(product.get('ingredients_text','')))} "
+        f"+ additives_tags={len(product.get('additives_tags') or [])} "
+        f"+ ingredients_tags={len(product.get('ingredients_tags') or [])})"
+    )
 
     risks = check_banned_ingredients(ingredients, BANNED_DF)
     logger.info(f"[Pipeline] {len(risks)} risks flagged")
 
-    result["ingredient_explanations"] = lookup_ingredient_explanations(ingredients)
+    result["ingredient_explanations"] = lookup_ingredient_explanations(ingredients, merged_records)
     result["concern_score"] = compute_concern_score(nutrition, ingredients, risks, user_profile)
     logger.info(f"[Pipeline] Score={result['concern_score']['score']} Level={result['concern_score']['level']}")
 
@@ -498,6 +555,18 @@ def analyze_product(barcode, user_profile=None):
     result["ai_summary"]   = generate_ai_summary(
         result["product"], nutrition, result["concern_score"], allergens, result["personalized_warnings"]
     )
+
+    # ── Dataset Regulatory Check (uploaded spreadsheet — authoritative source) ──
+    try:
+        result["dataset_regulatory_report"] = check_ingredients_against_dataset(ingredients)
+        ds = result["dataset_regulatory_report"]["summary"]
+        logger.info(
+            f"[Pipeline] Dataset check — Banned:{ds['banned']} "
+            f"Restricted:{ds['restricted']} Allowed:{ds['allowed']} NoMatch:{ds['no_match']}"
+        )
+    except Exception as exc:
+        logger.warning(f"[Pipeline] Dataset regulatory check failed: {exc}")
+        result["dataset_regulatory_report"] = None
 
     logger.info(f"=== Analysis DONE: {product.get('name')} ===")
     return result

@@ -23,6 +23,8 @@ def get_api_key(service: str) -> str:
     Return the API key for `service` (e.g. 'gemini', 'usda').
     Checks env var first, then secrets.toml.
     """
+    print("Secrets path:", _SECRETS_PATH)
+    print("Secrets loaded:", _secrets)
     env_key = f"{service.upper()}_API_KEY"
     val = os.environ.get(env_key, "").strip()
     if val:

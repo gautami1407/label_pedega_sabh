@@ -12,6 +12,7 @@ print(f"Gemini key loaded: {'YES - ' + key[:12] + '...' if key and 'your_gemini'
 print()
 print("--- Testing Gemini API directly (google-genai SDK) ---")
 try:
+<<<<<<< Updated upstream
     from google import genai
     client = genai.Client(api_key=key)
     response = client.models.generate_content(
@@ -19,6 +20,13 @@ try:
         contents="Say hello in one sentence.",
     )
     print(f"Gemini response: {response.text.strip()}")
+=======
+    import google.generativeai as genai
+    genai.configure(api_key=key)
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    resp = model.generate_content("Say hello in one sentence.")
+    print(f"Gemini response: {resp.text.strip()}")
+>>>>>>> Stashed changes
 except Exception as e:
     print(f"Gemini error: {e}")
 

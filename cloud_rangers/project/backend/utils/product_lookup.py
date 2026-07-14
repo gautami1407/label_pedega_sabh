@@ -183,27 +183,81 @@ def _off_by_barcode(barcode):
             allergens = [t.replace("en:", "").replace("-", " ").title()
                          for t in p.get("allergens_tags", [])]
 
-            logger.info(f"[OFF] Found: {name} | nova={p.get('nova_group')}")
+            # ── Collect every ingredient / additive related field from OFF ──
+            # ingredients_tags: ["en:sugar", "en:water", ...]
+            ingredients_tags = [
+                t.replace("en:", "").replace("-", " ").strip()
+                for t in p.get("ingredients_tags", [])
+                if t
+            ]
+
+            # additives_tags: ["en:e102", "en:e211", ...]  raw codes kept for resolver
+            additives_tags_raw = [
+                t.replace("en:", "").strip()
+                for t in p.get("additives_tags", [])
+                if t
+            ]
+
+            # additives_original: older field, plain list
+            additives_original = [
+                str(a).strip()
+                for a in p.get("additives", [])
+                if a
+            ]
+
+            # traces / may-contain allergens
+            traces_tags = [
+                t.replace("en:", "").replace("-", " ").title()
+                for t in p.get("traces_tags", [])
+                if t
+            ]
+
+            # ingredient_analysis: structured list of analysis objects
+            ingredient_analysis = p.get("ingredient_analysis", [])
+
+            # attribute_groups: additional attribute objects
+            attribute_groups = p.get("attribute_groups", [])
+
+            # labels (e.g. "Vegan", "No added sugar")
+            labels = p.get("labels", "")
+
+            # additives_n: count of additives (informational)
+            additives_n = p.get("additives_n", 0)
+
+            logger.info(
+                f"[OFF] Found: {name} | nova={p.get('nova_group')} "
+                f"| additives_tags={len(additives_tags_raw)} "
+                f"| ingredients_tags={len(ingredients_tags)}"
+            )
             return {
-                "name":             name,
-                "brand":            p.get("brands", "Unknown Brand"),
-                "image_url":        image_url,
-                "ingredients_text": p.get("ingredients_text", ""),
-                "nutriments":       nutriments,
-                "categories":       p.get("categories", ""),
-                "nova_group":       p.get("nova_group"),
-                "nutriscore_grade": p.get("nutriscore_grade"),
-                "allergens":        allergens,
-                "additives":        p.get("additives_tags", []),
-                "countries":        p.get("countries", ""),
-                "labels":           p.get("labels", ""),
-                "packaging":        p.get("packaging", ""),
-                "health_note":      "",
-                "health_concern":   "",
-                "consumer_note":    "",
-                "key_differences":  "",
-                "regulatory_raw":   {},
-                "source":           "OpenFoodFacts",
+                "name":                name,
+                "brand":               p.get("brands", "Unknown Brand"),
+                "image_url":           image_url,
+                "ingredients_text":    p.get("ingredients_text", ""),
+                "nutriments":          nutriments,
+                "categories":          p.get("categories", ""),
+                "nova_group":          p.get("nova_group"),
+                "nutriscore_grade":    p.get("nutriscore_grade"),
+                "allergens":           allergens,
+                # Legacy field kept for backwards compat — now raw additive codes
+                "additives":           additives_tags_raw or additives_original,
+                # New expanded fields
+                "additives_tags":      additives_tags_raw,
+                "additives_original":  additives_original,
+                "additives_n":         additives_n,
+                "ingredients_tags":    ingredients_tags,
+                "traces_tags":         traces_tags,
+                "ingredient_analysis": ingredient_analysis,
+                "attribute_groups":    attribute_groups,
+                "countries":           p.get("countries", ""),
+                "labels":              labels,
+                "packaging":           p.get("packaging", ""),
+                "health_note":         "",
+                "health_concern":      "",
+                "consumer_note":       "",
+                "key_differences":     "",
+                "regulatory_raw":      {},
+                "source":              "OpenFoodFacts",
             }
         logger.info(f"[OFF] Not found: {barcode}")
     except Exception as e:
