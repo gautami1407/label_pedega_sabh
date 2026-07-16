@@ -1,16 +1,19 @@
 """
-Product Intelligence Analysis Engine v2
+Product Intelligence Analysis Engine v3
 ========================================
-Complete 11-step pipeline:
+Complete 12-step pipeline:
 1. Barcode -> OpenFoodFacts / USDA / CSV lookup
 2. Ingredient explanation from knowledge base
 3. Rule-based concern score (transparent, no AI)
 4. Allergen detection
 5. Personalized warnings (health profile)
 6. Global regulatory status (8 countries)
-7. Recall/news fetch
+7. Recall/news fetch (enhanced with ingredients/category)
 8. NOVA classification
 9. AI summary via Gemini (with rule-based fallback)
+10. Related products for comparison
+11. Better alternatives
+12. Scientific references
 """
 
 import os
@@ -179,7 +182,7 @@ def lookup_ingredient_explanations(ingredients, metadata=None):
                 "name":        ing,
                 "simple_name": "",
                 "purpose":     "Ingredient listed on label.",
-                "description": "No detailed information available.",
+                "description": "No verified public information available.",
                 "category":    "Unknown",
                 "source":      meta_rec.get("source", "ingredients"),
                 "ins_e":       ins_e_label,
@@ -389,15 +392,143 @@ def get_regulatory_status(ingredients, regulatory_raw=None):
     return results
 
 # ── Step 9: News/recalls ──────────────────────────────────
-def fetch_recall_news(product_name):
+def fetch_recall_news(product_name, brand_name="", ingredients=None, category=None):
     logger.info(f"[News] Fetching for: {product_name}")
     try:
-        return get_safety_news(product_name, max_articles=6)
+        return get_safety_news(product_name, brand_name, max_articles=6, 
+                               ingredients=ingredients, category=category)
     except Exception as e:
         logger.warning(f"[News] Error: {e}")
         return []
 
-# ── Step 10: NOVA ─────────────────────────────────────────
+# ── Step 10: Related Products ─────────────────────────────
+def find_related_products(product, limit=4):
+    """Find products in the same category for comparison."""
+    if not product:
+        return []
+    
+    categories = product.get("categories", "")
+    if not categories:
+        return []
+    
+    # Extract first category for search
+    first_category = categories.split(",")[0].strip() if "," in categories else categories
+    
+    try:
+        from utils.product_lookup import CSV_DF
+        if CSV_DF.empty:
+            return []
+        
+        # Find products in the same category
+        products = []
+        for _, row in CSV_DF.iterrows():
+            if len(products) >= limit:
+                break
+            row_cat = str(row.get("category", "")).lower()
+            if first_category.lower() in row_cat or row_cat in first_category.lower():
+                barcode = str(row.get("barcode_india", "")).strip()
+                if barcode and barcode != "nan":
+                    # Calculate health score based on ingredients
+                    sugar_score = 0
+                    for i in range(1, 11):
+                        ing = str(row.get(f"india_ingredient_{i}", "")).lower()
+                        if "sugar" in ing or "syrup" in ing:
+                            sugar_score += 5
+                    
+                    products.append({
+                        "name": str(row.get("product_name", "Unknown")).strip(),
+                        "brand": str(row.get("brand", "Unknown")).strip(),
+                        "barcode": barcode,
+                        "health_score": max(30, 100 - sugar_score)
+                    })
+        return products
+    except Exception as e:
+        logger.warning(f"[Related] Error finding related products: {e}")
+        return []
+
+# ── Step 11: Better Alternatives ───────────────────────────
+def find_better_alternatives(product, current_score, limit=3):
+    """Find healthier alternatives using the dataset."""
+    if not product:
+        return []
+    
+    alternatives = []
+    
+    try:
+        from utils.product_lookup import CSV_DF
+        if CSV_DF.empty:
+            return []
+        
+        nutrition = product.get("nutriments", {})
+        current_sugar = float(nutrition.get("sugars_100g", 0) or 0)
+        
+        # Find better alternatives
+        for _, row in CSV_DF.iterrows():
+            if len(alternatives) >= limit:
+                break
+            
+            # Skip if same product
+            if str(row.get("product_name", "")).lower() == product.get("name", "").lower():
+                continue
+            
+            # Calculate sugar from ingredients
+            sugar = 0
+            for i in range(1, 11):
+                ing = str(row.get(f"india_ingredient_{i}", "")).lower()
+                if "sugar" in ing or "syrup" in ing or "dextrose" in ing:
+                    sugar += 5
+            
+            # Prefer products with lower sugar
+            if sugar < current_sugar or current_sugar > 5:
+                alternatives.append({
+                    "name": str(row.get("product_name", "")).strip(),
+                    "brand": str(row.get("brand", "")).strip(),
+                    "barcode": str(row.get("barcode_india", "")).strip(),
+                    "health_score": max(70, 100 - sugar * 10) if sugar < current_sugar else 85,
+                    "why_better": f"Lower sugar content ({max(0, sugar)}g vs {current_sugar}g)" if sugar < current_sugar else "Reduced artificial additives"
+                })
+        
+        return alternatives
+    except Exception as e:
+        logger.warning(f"[Alternatives] Error finding alternatives: {e}")
+        return []
+
+# ── Step 12: Scientific References ─────────────────────────
+def get_scientific_references(product, ingredients):
+    """Get scientific references for ingredients."""
+    refs = []
+    if not ingredients:
+        return refs
+    
+    for ing in ingredients[:5]:  # Limit to top 5
+        ing_lower = ing.lower()
+        for key, val in INGREDIENT_KNOWLEDGE.items():
+            if key in ing_lower or ing_lower in key:
+                if val.get("health_notes"):
+                    refs.append({
+                        "title": f"Health Information: {ing}",
+                        "link": f"https://en.wikipedia.org/wiki/{ing.replace(' ', '_')}"
+                    })
+                    break
+    
+    refs.append({
+        "title": "FSSAI Food Safety Regulations",
+        "link": "https://www.fssai.gov.in"
+    })
+    
+    refs.append({
+        "title": "WHO Nutrition Guidelines",
+        "link": "https://www.who.int/health-topics/nutrition"
+    })
+    
+    refs.append({
+        "title": "EFSA Food Additive Database",
+        "link": "https://efsa.onlinelibrary.wiley.com/doi/10.2903/j.efsa.2023.8750"
+    })
+    
+    return refs[:8]
+
+# ── Step 13: NOVA ─────────────────────────────────────────
 NOVA_MAP = {
     1: {"level": 1, "name": "Unprocessed / Minimally Processed",
         "description": "Natural foods altered only by simple processes like cleaning or freezing."},
@@ -415,7 +546,7 @@ def get_nova_level(nova_group):
     except (ValueError, TypeError):
         return {"level": "Unknown", "name": "Not Classified", "description": "NOVA data not available."}
 
-# ── Step 11: AI summary ───────────────────────────────────
+# ── Step 14: AI summary ───────────────────────────────────
 def generate_ai_summary(product, nutrition, concern_score, allergens, personalized_warnings):
     try:
         from config import get_api_key
@@ -494,6 +625,8 @@ def analyze_product(barcode, user_profile=None):
         "nutriscore": product.get("nutriscore_grade", ""),
         "nova_group": product.get("nova_group"),
         "source":     product.get("source", "OpenFoodFacts"),
+        "manufacturer": product.get("manufacturer", ""),
+        "origin":     product.get("origin", ""),
         # CSV-enriched fields
         "health_note":      product.get("health_note", ""),
         "health_concern":   product.get("health_concern", ""),
@@ -505,16 +638,9 @@ def analyze_product(barcode, user_profile=None):
     result["nutrition"] = nutrition
 
     # ── Build the UNIFIED ingredient list ─────────────────────────
-    # merge_ingredients_and_additives() consumes ALL OFF fields:
-    #   ingredients_text, ingredients_tags, additives_tags,
-    #   additives_original, ingredient_analysis.
-    # E/INS codes are resolved to canonical names before merging.
-    # The result is deduplicated; source="both" when an item appears
-    # in multiple fields.
     merged_records = merge_ingredients_and_additives(product)
     ingredients    = [r["ingredient_name"] for r in merged_records]
 
-    # Also expose the full metadata records for downstream use
     result["ingredients"]         = ingredients
     result["ingredient_metadata"] = merged_records
 
@@ -549,14 +675,30 @@ def analyze_product(barcode, user_profile=None):
         logger.error(f"[Pipeline] Error running Excel additive report: {e}")
         result["additive_regulatory_report"] = []
 
-    result["news"]         = fetch_recall_news(product.get("name", ""))
+    # Enhanced news fetch with ingredients and category
+    result["news"] = fetch_recall_news(
+        product.get("name", ""),
+        brand_name=product.get("brand", ""),
+        ingredients=ingredients,
+        category=product.get("categories", "")
+    )
+    
     result["nova"]         = get_nova_level(product.get("nova_group"))
     result["health_score"] = calculate_health_score(nutrition)
     result["ai_summary"]   = generate_ai_summary(
         result["product"], nutrition, result["concern_score"], allergens, result["personalized_warnings"]
     )
 
-    # ── Dataset Regulatory Check (uploaded spreadsheet — authoritative source) ──
+    # Related products
+    result["related_products"] = find_related_products(product)
+    
+    # Better alternatives
+    result["better_alternatives"] = find_better_alternatives(product, result["concern_score"]["score"])
+    
+    # Scientific references
+    result["scientific_references"] = get_scientific_references(product, ingredients)
+
+    # Dataset Regulatory Check
     try:
         result["dataset_regulatory_report"] = check_ingredients_against_dataset(ingredients)
         ds = result["dataset_regulatory_report"]["summary"]

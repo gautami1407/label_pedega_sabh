@@ -1,5 +1,6 @@
-# news_service.py — Enhanced v2
+# news_service.py — Enhanced v3
 # Smarter news fetching with brand/product/ingredient awareness
+
 import feedparser
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
@@ -95,6 +96,37 @@ def _get_brand_terms(product_name, brand_name=""):
     
     return list(terms)
 
+# ── Ingredient extraction for better news queries ─────────────────────
+def extract_ingredient_keywords(ingredients):
+    """Extract key ingredients/searches from ingredient list for targeted news."""
+    keywords = []
+    if not ingredients:
+        return keywords
+    
+    ingredients_str = " ".join(ingredients).lower()
+    
+    # Common additive names and their news search terms
+    additive_news_map = {
+        "titanium dioxide": ["titanium dioxide food safety", "e171 ban"],
+        "e150d": ["caramel colour safety", "e150d regulations"],
+        "e102": ["tartrazine safety", "yellow 5 food dye"],
+        "e110": ["sunset yellow safety", "yellow 6 food dye"],
+        "e129": ["allura red safety", "red 40 food dye"],
+        "e133": ["brilliant blue safety", "blue 1 food dye"],
+        "sodium benzoate": ["sodium benzoate health", "benzoate preservative"],
+        "bha": ["bha preservative safety"],
+        "bht": ["bht preservative safety"],
+        "tbhq": ["tbhq safety", "tertiary butylhydroquinone"],
+        "aspartame": ["aspartame safety", "aspartame artificial sweetener"],
+        "sucralose": ["sucralose safety", "splenda sweetener"],
+        "potassium bromate": ["potassium bromate ban", "bromate bread safety"],
+    }
+    
+    for key, search_terms in additive_news_map.items():
+        if key in ingredients_str:
+            keywords.extend(search_terms)
+    
+    return list(set(keywords))
 
 def is_relevant_article(entry, product_name, brand_name=""):
     """Check if article is relevant to the product with better filtering."""
@@ -119,7 +151,6 @@ def is_relevant_article(entry, product_name, brand_name=""):
     all_relevant = SAFETY_KEYWORDS + FOOD_CONTEXT_KEYWORDS
     return any(keyword in text for keyword in all_relevant)
 
-
 def parse_article_date(entry):
     try:
         if entry.published_parsed:
@@ -128,13 +159,11 @@ def parse_article_date(entry):
         pass
     return None
 
-
 def is_recent(entry, days=365):
     date = parse_article_date(entry)
     if not date:
         return True
     return date >= datetime.now() - timedelta(days=days)
-
 
 def extract_thumbnail(entry):
     try:
@@ -157,13 +186,11 @@ def extract_thumbnail(entry):
         pass
     return None
 
-
 def resolve_image(entry, link):
     img = extract_thumbnail(entry)
     if img and img.startswith("http"):
         return img
     return FALLBACK_IMAGE
-
 
 def format_date(date):
     if not date:
@@ -182,27 +209,39 @@ def format_date(date):
     return date.strftime("%b %d, %Y")
 
 
-def get_safety_news(product_name, brand_name="", max_articles=10):
+def get_safety_news(product_name, brand_name="", max_articles=10, ingredients=None, category=None):
     """
     Fetch intelligent safety news for a product.
     Uses brand-aware search with multiple query strategies.
+    Now also considers ingredients and category for targeted news.
     """
     articles = []
     seen = set()
     
     search_terms = _get_brand_terms(product_name, brand_name)
     
-    # Try multiple search queries for better coverage
+    # Build queries based on multiple factors
     queries = [
         f"{product_name} recall OR contamination OR banned OR unsafe",
         f"{product_name} food safety OR health warning",
-        f"{product_name} FDA OR FSSAI OR EFSA regulation",
     ]
+    
+    # Add ingredient-specific queries if provided
+    if ingredients:
+        ingredient_keywords = extract_ingredient_keywords(ingredients)
+        for kw in ingredient_keywords[:3]:  # Limit to avoid too many queries
+            queries.insert(1, f"{kw} safety OR regulation")
+    
+    # Add category-specific queries if provided
+    if category:
+        cat_terms = category.split(",")[0].strip() if "," in category else category
+        queries.append(f"{cat_terms} food safety OR regulatory update")
     
     # Add brand-specific query
     if brand_name:
         queries.insert(0, f"{brand_name} {product_name} recall OR safety")
     
+    # Categorize articles
     for query in queries:
         if len(articles) >= max_articles:
             break
@@ -237,12 +276,23 @@ def get_safety_news(product_name, brand_name="", max_articles=10):
             source = parts[-1] if len(parts) > 1 else "News"
             title = " - ".join(parts[:-1]) if len(parts) > 1 else entry.title
             
+            # Determine category
+            entry_text = (entry.title + " " + entry.summary).lower()
+            category = 'news'
+            if 'recall' in entry_text:
+                category = 'recall'
+            elif 'banned' in entry_text or 'prohibited' in entry_text:
+                category = 'regulation'
+            elif 'study' in entry_text or 'research' in entry_text:
+                category = 'study'
+            
             articles.append({
                 "title": title.strip(),
                 "link": link.strip(),
                 "source": source.strip(),
                 "thumbnail": resolve_image(entry, link),
-                "date": format_date(parse_article_date(entry))
+                "date": format_date(parse_article_date(entry)),
+                "category": category
             })
     
     return articles

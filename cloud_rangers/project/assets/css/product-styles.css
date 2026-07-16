@@ -1,6 +1,517 @@
-/* LPS Consumer Decision Platform v6.0 */
+/* LPS Consumer Decision Platform v7.0 - Startup Quality */
+
+:root {
+    --purchase-green: #10b981;
+    --purchase-yellow: #f59e0b;
+    --purchase-red: #ef4444;
+    --badge-ultra: #f97316;
+    --badge-sugar: #dc2626;
+    --badge-sodium: #ea580c;
+    --badge-artificial: #8b5cf6;
+}
+
+/* Purchase Decision Badge Styles */
+.purchase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    border: none;
+}
+
+.purchase-badge.recommended {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+}
+
+.purchase-badge.occasional {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+
+.purchase-badge.limit {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(249, 115, 14, 0.25);
+}
+
+.purchase-badge.not-recommended {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.25);
+}
+
+/* Product Badges */
+.product-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 600;
+    margin: 2px;
+}
+
+.badge-ultra-processed { background: rgba(249, 115, 14, 0.15); color: var(--badge-ultra); }
+.badge-high-sugar { background: rgba(220, 38, 38, 0.15); color: var(--badge-sugar); }
+.badge-high-sodium { background: rgba(234, 88, 12, 0.15); color: var(--badge-sodium); }
+.badge-artificial { background: rgba(139, 92, 246, 0.15); color: var(--badge-artificial); }
+.badge-allergens { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+.badge-vegetarian { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.badge-vegan { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.badge-gluten-free { background: rgba(16, 185, 129, 0.15); color: #059669; }
+
+/* Health Dashboard Gauges */
+.health-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.gauge-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+.gauge-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.gauge-svg {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 12px;
+}
+
+.gauge-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.gauge-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* Purchase Decision Reasons */
+.purchase-reasons {
+    margin: 16px 0;
+}
+
+.reason-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.reason-item.positive {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid #10b981;
+}
+
+.reason-item.negative {
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 3px solid #ef4444;
+}
+
+.reason-item.warning {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid #f59e0b;
+}
+
+/* Audience Warning */
+.audience-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    border-left: 4px solid #f59e0b;
+}
+
+.audience-warning h6 {
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 8px;
+}
+
+.audience-warning ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #92400e;
+    font-size: 13px;
+}
+
+/* Ingredient Knowledge Card */
+.ingredient-knowledge-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.ingredient-knowledge-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+}
+
+.ingredient-card-header {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #f8fafc;
+}
+
+.ingredient-card-header:hover {
+    background: #f1f5f9;
+}
+
+.ingredient-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.ingredient-category-badge {
+    font-size: 11px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4338ca;
+    padding: 2px 8px;
+    border-radius: 50px;
+}
+
+.ingredient-card-body {
+    padding: 16px 18px;
+    display: none;
+    border-top: 1px solid #e2e8f0;
+}
+
+.ingredient-card-body.expanded {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+.ingredient-info-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.ingredient-info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    min-width: 130px;
+}
+
+.ingredient-info-value {
+    font-size: 12px;
+    color: #64748b;
+    flex: 1;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Related Products Section */
+.related-products-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.related-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.related-product-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+
+.related-product-card:hover {
+    transform: translateY(-4px);
+    border-color: #10b981;
+}
+
+.related-product-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.related-product-score {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.related-product-healthiest {
+    color: #059669;
+}
+
+.related-product-occasional {
+    color: #d97706;
+}
+
+.related-product-limit {
+    color: #dc2626;
+}
+
+.healthiest-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #10b981;
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 50px;
+    font-weight: 700;
+}
+
+/* Regulatory Dashboard */
+.regulatory-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+.country-reg-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.country-reg-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+.country-flag {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.country-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.country-status {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.country-status.allowed { color: #059669; }
+.country-status.restricted { color: #d97706; }
+.country-status.banned { color: #dc2626; }
+
+/* News Categories */
+.news-categories {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.news-category-tab {
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: 50px;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.news-category-tab.active {
+    background: var(--gradient-primary);
+    color: #fff;
+}
+
+/* Better Alternatives */
+.alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.alternative-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+.alternative-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    border-color: #10b981;
+}
+
+.alternative-reason {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+}
+
+/* Personalized Health Insights */
+.health-insight {
+    background: rgba(16, 185, 129, 0.05);
+    border-left: 4px solid #10b981;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 12px;
+}
+
+.health-insight-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #047857;
+    margin-bottom: 4px;
+}
+
+.health-insight-desc {
+    font-size: 12px;
+    color: #065f46;
+}
+
+/* Scientific References */
+.reference-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reference-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 3px solid #10b981;
+}
+
+.reference-item a {
+    font-size: 13px;
+    color: #059669;
+    text-decoration: none;
+}
+
+.reference-item a:hover {
+    text-decoration: underline;
+}
+
+/* Product Summary Enhanced */
+.product-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.product-meta-item {
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.product-meta-label {
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.product-meta-value {
+    color: #0f172a;
+    font-weight: 500;
+}
+
+/* Better Alternatives Header */
+.alternatives-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.alternatives-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.find-alternatives-btn {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 50px;
+}
+
+/* Enhanced Hero Card */
+.hero-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    border: 1px solid #e2e8f0;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 28px;
+    padding: 28px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+/* Original styles preserved below */
 .loader-ring{width:72px;height:72px;border-radius:50%;border:4px solid #e2e8f0;border-top-color:#059669;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.hero-card{background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid #e2e8f0;display:grid;grid-template-columns:200px 1fr;gap:28px;padding:28px;margin-bottom:20px;overflow:hidden}
 .hero-l .hero-img{width:100%;height:200px;border-radius:14px;overflow:hidden;background:#f8fafc;display:flex;align-items:center;justify-content:center}
 .hero-l .hero-img img{width:100%;height:100%;object-fit:contain}
 .hero-r .hero-brand{font-size:13px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
