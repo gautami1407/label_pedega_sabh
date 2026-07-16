@@ -48,4 +48,4 @@ Contributions are welcome! Feel free to fork the repository, create a new branch
 
 ## 📄 License
 
-This project was developed for educational, research, and hackathon purposes.
+This project was developed for educational, research purposes.
